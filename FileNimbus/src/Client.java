@@ -8,7 +8,7 @@ public class Client {
 
         int portNum = 8080;
 
-        Socket socket = new Socket("192.168.43.111", portNum);
+        Socket socket = new Socket("localhost", portNum);
 
         // Integer Object to send to Server.
         Integer num = new Integer(50);
@@ -16,11 +16,17 @@ public class Client {
         ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
         ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
         
-        out.writeObject("SEND");
+        
+        System.out.print(":");
+        String input = System.console().readLine();
+        out.writeObject(input);
         String response = (String) in.readObject();
         while (!response.isEmpty()){
         	System.out.println("Server message: " + response);
-        	out.writeObject("SEND");
+        	
+        	System.out.print(":");
+            input = System.console().readLine();
+        	out.writeObject(input);
         	response = (String) in.readObject();
         }
 
