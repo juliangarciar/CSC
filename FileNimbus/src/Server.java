@@ -5,11 +5,9 @@ public class Server {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        // Port number to bind server to.
-        int portNum = 11115;
-        
+
         // Socket for server to listen at.
-        ServerSocket listener = new ServerSocket(0, 0, InetAddress.getLocalHost());
+        ServerSocket listener = new ServerSocket(8080, 0, InetAddress.getByName("192.168.43.111"));
         //System.out.println("Server is now running at port: " + portNum);
         System.out.println(listener.getInetAddress());
         // Simply making Server run continously.
@@ -23,11 +21,21 @@ public class Server {
                 ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 
                 // Reading in Integer Object from input stream.
-                int i = (Integer) in.readObject();
-
+                String i = (String)in.readObject();
+                out.writeObject("QUE TE FOLLEN");
+                while(!i.isEmpty()) {
+                	i = (String)in.readObject();
+	                if(i.equals("SEND")) {
+	                	System.out.println("GOT IT");
+	                	out.writeObject("QUE TE FOLLEN");
+	                }
+	                else if(i.equals("QUIT")) {
+	                	break;
+	                }
+                }
                 //Sending response back to client
-                String response = "Integer Object Received.";
-                out.writeObject(response);
+                //String response = "Integer Object Received.";
+                //out.writeObject(response);
 
                 // Outputting recieved Integer Object.
                 System.out.println("Received integer: " + i);
