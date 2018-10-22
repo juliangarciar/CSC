@@ -19,11 +19,12 @@ public class Client {
         out.writeObject("SEND");
         String response = (String) in.readObject();
         while (!response.isEmpty()){
+        	System.out.println("Server message: " + response);
         	out.writeObject("SEND");
         	response = (String) in.readObject();
         }
 
-        System.out.println("Server message: " + response);
+        
         
         //socket.close();
         
