@@ -29,16 +29,7 @@ public class Server {
                 t.start();
 
                 
-                //Sending response back to client
-                //String response = "Integer Object Received.";
-                //out.writeObject(response);
-
-                // Outputting recieved Integer Object.
-                System.out.println("Received integer: " + i);
-                out.close();
-                in.close();
-                clientSocket.close();
-                break;
+                
             } finally {
                       // Closing Server Socket now.
                       listener.close();
@@ -46,7 +37,7 @@ public class Server {
         }
     }
     
-    private class ControladorCliente extends Thread {
+    public static class ControladorCliente extends Thread{
     	final Socket s;
     	final ObjectInputStream in;
     	final ObjectOutputStream out;
@@ -55,30 +46,30 @@ public class Server {
     		 this.s = s;
     		 this.in = in;
     		 this.out = out;
-    	 }
-    	 
-    	 
+    	 } 
     	 public void run() {
-    		 while(true) {
-    			 try {
-    				// Reading in Integer Object from input stream.
-    	                String i = (String)in.readObject();
-    	                out.writeObject("QUE TE FOLLEN");
-    	                while(!i.isEmpty()) {
-    	                	i = (String)in.readObject();
-    		                if(i.equals("SEND")) {
-    		                	System.out.println("GOT IT");
-    		                	out.writeObject("QUE TE FOLLEN");
-    		                }
-    		                else if(i.equals("QUIT")) {
-    		                	break;
-    		                }
-    	                }
-    			 }catch(Exception e) {
-    				 System.out.println(e.getMessage());
-    			 }
-    		 }
+			 try {
+				// Reading in Integer Object from input stream.
+	                String i = (String)in.readObject();
+	                out.writeObject("QUE TE FOLLEN");
+	                while(!i.isEmpty()) {
+	                	i = (String)in.readObject();
+		                if(i.equals("SEND")) {
+		                	System.out.println("GOT IT");
+		                	out.writeObject("QUE TE FOLLEN");
+		                }
+		                else if(i.equals("QUIT")) {
+		                	break;
+		                }
+		                
+		                out.close();
+		                in.close();
+		                s.close();
+		                break;
+	                }
+			 }catch(Exception e) {
+				 System.out.println(e.getMessage());
+			 }
     	 }
-   
     }
 }
