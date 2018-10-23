@@ -8,46 +8,61 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.SealedObject;
 
 public class Server {
-	private static int port = 8080;
+	private static int port = 8081;
 	private static String ip = "localhost";
 	
+	private static ServerSocket listener = null;
 	private static ObjectOutputStream out = null;
 	private static ObjectInputStream in = null;
 	private static int cliente = 1;
 	private final static KeyPair KP = buildKeyPair();
 	
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-		
+    public static void main(String[] args) throws Exception, ClassNotFoundException {
+    	
+    	//Cierra el puerto cuando se hace Ctr+C
+    	Runtime.getRuntime().addShutdownHook(new Thread() {
+    		public void run() {
+    			System.out.println("Cerrando Servidor...");
+    			try{
+    			in.close();
+    			out.close();
+    			listener.close();
+    			}catch(Exception e) {}
+    		}
+    	});
 
 
-        // Socket for server to listen at.
-        ServerSocket listener = new ServerSocket(port, 0, InetAddress.getByName(ip));
-        //System.out.println("Server is now running at port: " + portNum);
-        System.out.println(listener.getInetAddress());
-        // Simply making Server run continously.
+        // Se crea el socket
+        listener = new ServerSocket(port, 0, InetAddress.getByName(ip));
+        
+        System.out.println("Servidor correindo en la ip: " + listener.getInetAddress() + ":" +port);
+        
+        //Socket de cliente
         Socket clientSocket = null;
+        
         while (true) {
             try {
                 // Accept a client connection once Server recieves one.
-               clientSocket = listener.accept();
+            	clientSocket = listener.accept();
                 System.out.println("Nuevo cliente!  --  Asignando variables");
                 
                 // Creating inout and output streams. Must creat out put stream first.
                 out = new ObjectOutputStream(clientSocket.getOutputStream());
                 in = new ObjectInputStream(clientSocket.getInputStream());
                 
-                Thread t = new ControladorCliente(clientSocket, in, out, cliente);
-                cliente++;
+                //Nuevo hilo Controlador de cliente con el socket el numero de cliente y la entrada y salida
+                Thread t = new ControladorCliente(clientSocket, in, out, cliente); 
                 t.start();
 
-                
+                cliente++;
                 
             } finally {
             } 
         }
     }
     
+    //Genera un par de claves RSA
     public static KeyPair buildKeyPair(){
     	try {
         final int keySize = 2048;
@@ -60,13 +75,15 @@ public class Server {
     	}
     	return null;
     }
-    
+
+    //Controlador de cliente
     public static class ControladorCliente extends Thread{
+    	private static boolean sc = false; //Conexion segura
     	final Socket s;
     	final ObjectInputStream in;
     	final ObjectOutputStream out;
-    	final int client;
-    	private static Key conectionKey = null;
+    	final int client;//Numero de cliente
+    	private static Key conectionKey = null;// Clave secreta de consexion
     	
     	 public ControladorCliente(Socket s, ObjectInputStream in, ObjectOutputStream out, int client) {
     		 this.s = s;
@@ -81,15 +98,40 @@ public class Server {
                 while(!i.isEmpty()) {
                 	if(i.equals("000")) {
                 		conection();
-                	}else if(i.equals("999")) {
-                		out.writeObject("CLOSED");
+                	}else if(i.equals("100")){
+                		//Login
+                		SS("E000");
+                	}else if(i.equals("200")){
+                		//Comprobacion de fichero
+                		SS("E000");
+                	}else if(i.equals("300")){
+                		//Subida
+                		SS("E000");
+                	}else if(i.equals("400")){
+                		//Descarga
+                		SS("E000");
+                	}else if(i.equals("500")){
+                		//Borrado
+                		SS("E000");
+                	}else if(i.equals("600")){
+                		//Compartir
+                		SS("E000");
+                	}else if(i.equals("700")){
+                		//Cuenta
+                		SS("E000");
+                	}else if(i.equals("800")){
+                		//Vacio
+                		SS("E000");
+                	}else if(i.equals("900")) {
+                		//Cierre
+                		SS("910");
                 		System.out.println("Cliente " + this.client + ": CLOSED");
                 		break;
                 	}else{
 	                	System.out.println("Cliente " + this.client + ": " + i);
-	                	out.writeObject("000");
+	                	SS("E100");
                 	}
-                	i = (String)SRecive();
+                	i = (String)SR();
                 }
                 out.close();
                 in.close();
@@ -126,7 +168,10 @@ public class Server {
     			 
     			 
     			 System.out.println("Enviando...");
+    			 
     			 out.writeObject(socketEncrypted);
+    			 
+    			 sc=true;
     			 
     		 }catch(Exception e) {
     			 System.out.println(e);
@@ -134,17 +179,25 @@ public class Server {
     		
     	 }
     
-    	 public void SSend(Object o) throws Exception{
-    	    	Cipher c = Cipher.getInstance("AES");
-    			c.init(Cipher.ENCRYPT_MODE, conectionKey);
-    			SealedObject socketEncrypted = new SealedObject((Serializable) o, c);
-    	    	out.writeObject(socketEncrypted);
+    	 public void SS(Object o) throws Exception{
+    		 if(sc) {
+    			 Cipher c = Cipher.getInstance("AES");
+    			 c.init(Cipher.ENCRYPT_MODE, conectionKey);
+    			 SealedObject socketEncrypted = new SealedObject((Serializable) o, c);
+    			 out.writeObject(socketEncrypted);
+    		 }else {
+    			 out.writeObject(o);
+    		 }
     	    }
-    	 public Object SRecive() throws Exception {
-	    	SealedObject socket = (SealedObject) in.readObject();
-	    	Cipher c = Cipher.getInstance("AES");
-	    	c.init(Cipher.DECRYPT_MODE, conectionKey);
-	    	return socket.getObject(c);
+    	 public Object SR() throws Exception {
+    		 if(sc) {
+	    		 SealedObject socket = (SealedObject) in.readObject();
+	    		 Cipher c = Cipher.getInstance("AES");
+	    		 c.init(Cipher.DECRYPT_MODE, conectionKey);
+	    		 return socket.getObject(c);
+    		 }else {
+    			 return in.readObject();
+    		 }
 	    }
     }
 }

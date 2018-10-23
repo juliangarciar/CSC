@@ -1,0 +1,27 @@
+-- Codigos de Protocolo
+
+000 -- Solicitud de conexión Segura
+010 -- Confirmacion de CS
+
+100 -- Solicitud de Login
+
+200 -- Comprobacion de Fcheros
+
+300 -- Subida de fichero
+
+400 -- Descarga de fichero
+
+500 -- Borrado de fichero
+
+600 -- Compartir fichero
+
+700 -- Ajustes de cuenta
+
+
+900 -- Cierre de Conexion
+
+
+--Codigos de Error
+
+E000 -- No implementado
+E100 -- Protocolo Erroneo
