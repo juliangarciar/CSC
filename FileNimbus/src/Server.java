@@ -2,13 +2,12 @@ import java.io.*;
 import java.net.*;
 import java.security.*;
 import java.util.Base64;
-
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.SealedObject;
 
 public class Server {
-	private static int port = 8081;
+	private static int port = 8080;
 	private static String ip = "localhost";
 	
 	private static ServerSocket listener = null;
@@ -65,7 +64,7 @@ public class Server {
     //Genera un par de claves RSA
     public static KeyPair buildKeyPair(){
     	try {
-        final int keySize = 2048;
+        final int keySize = 2048; //TODO Tamaño de par de claves
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(keySize);      
         return keyPairGenerator.genKeyPair();

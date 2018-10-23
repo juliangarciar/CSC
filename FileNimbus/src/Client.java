@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 import java.util.Base64;
 import java.security.*;
 
@@ -15,11 +16,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Client {
 	private static final boolean print = true;//Valor que indica si se muestran o no por consola 
-	private static final int portNum = 8081;
+	private static final int portNum = 8080;
 	private static final String ip = "localhost";
 	
 	private static boolean sc;//Conexion segura
 	private static String pwd;
+	private static String username;
 	private static Key conectionKey = null; // Clave AES de conexion
 	private static KeyPair UserKP;// Par de claves de usuario
 
@@ -82,7 +84,7 @@ public class Client {
     	
     	//println("Generando clave secreta...");
     	KeyGenerator kgen = KeyGenerator.getInstance("AES");
-        kgen.init(128);
+        kgen.init(128); //TODO Tamaño de clave secreta
         conectionKey = kgen.generateKey();
         
         //println("Cifrando clave secreta...");
@@ -108,11 +110,11 @@ public class Client {
     	//Obtenemos datos:
     	println(" ~ Login ~");
     	print(" Username: ");
-    	String username = System.console().readLine();
+    	username = System.console().readLine();
     	print(" Password: ");
-        String password = new String(System.console().readPassword());
+        pwd = new String(System.console().readPassword());
         
-        println(username + " -- " + password);
+        println(username + " -- " + pwd);
         
     	SS("100");
     	println(SR());
@@ -122,8 +124,42 @@ public class Client {
     	SS("200");
     	println(SR());
     }
-    public static void upload() throws Exception {
+    public static void upload() throws Exception {//Esto son solo test, me lo estoy inventando toodo
     	//TODO ------------------------- upload
+    	File file = new File("C:/Users/Usuario/Desktop/captura.png");
+    	
+    	
+    	//Generar clave para encriptar el file
+    	KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        kgen.init(128);
+        Key k = kgen.generateKey();
+        
+        //Encriptar File
+        Cipher c = Cipher.getInstance("AES");
+		c.init(Cipher.ENCRYPT_MODE, k);
+		SealedObject fileEncrypted = new SealedObject((Serializable) file, c);
+    	
+		//Encriptar key
+		c = Cipher.getInstance("AES");
+		byte[] pwdb = pwd.getBytes("UTF-8");//TODO No se encriptar la clave con pwd
+		MessageDigest sha = MessageDigest.getInstance("SHA-1");
+		pwdb = sha.digest(pwdb);
+		pwdb = Arrays.copyOf(pwdb, 16); // primeros 16 bytes
+
+		SecretKeySpec pwdk = new SecretKeySpec(pwdb, "AES");
+		c.init(Cipher.ENCRYPT_MODE, pwdk);
+		SealedObject keyEncrypted = new SealedObject((Serializable) k, c);
+		
+		//Copiado desde aqui pasar a bytes un objeto serializable
+		ByteArrayOutputStream bs= new ByteArrayOutputStream();
+		ObjectOutputStream os = new ObjectOutputStream (bs);
+		os.writeObject(fileEncrypted); 
+		os.close();
+		//Copiado hasta aqui
+        
+    	println(bs.toByteArray());
+    	println(keyEncrypted);
+    	
     	SS("300");
     	println(SR());
     }
