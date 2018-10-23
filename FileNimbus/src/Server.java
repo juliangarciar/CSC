@@ -45,7 +45,7 @@ public class Server {
             try {
                 // Accept a client connection once Server recieves one.
             	clientSocket = listener.accept();
-                System.out.println("Nuevo cliente!  --  Asignando variables");
+                System.out.println(cliente + ": Nuevo cliente");
                 
                 // Creating inout and output streams. Must creat out put stream first.
                 out = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -78,12 +78,12 @@ public class Server {
 
     //Controlador de cliente
     public static class ControladorCliente extends Thread{
-    	private static boolean sc = false; //Conexion segura
+    	private boolean sc = false; //Conexion segura
     	final Socket s;
     	final ObjectInputStream in;
     	final ObjectOutputStream out;
     	final int client;//Numero de cliente
-    	private static Key conectionKey = null;// Clave secreta de consexion
+    	private Key conectionKey = null;// Clave secreta de consexion
     	
     	 public ControladorCliente(Socket s, ObjectInputStream in, ObjectOutputStream out, int client) {
     		 this.s = s;
@@ -125,10 +125,10 @@ public class Server {
                 	}else if(i.equals("900")) {
                 		//Cierre
                 		SS("910");
-                		System.out.println("Cliente " + this.client + ": CLOSED");
+                		System.out.println( this.client + ": Fin de conexion");
                 		break;
                 	}else{
-	                	System.out.println("Cliente " + this.client + ": " + i);
+	                	System.out.println(this.client + ": " + i);
 	                	SS("E100");
                 	}
                 	i = (String)SR();
@@ -142,32 +142,32 @@ public class Server {
     	 }
    
     	 public void conection() {
-    		 System.out.println(client + " Conectando...");
+    		 System.out.println(client + ": Conectando...");
     		 try {
     			 out.writeObject(KP.getPublic());
-    			 System.out.println("Emitida clave pública...");
+    			 //System.out.println("Emitida clave pública...");
     			 
     			 
     			 SealedObject i = (SealedObject) in.readObject();
-    			 System.out.println("Recibida clave secreta...");
+    			 //System.out.println("Recibida clave secreta...");
     			 
-    			 System.out.println("Desencriptando clave secreta...");
+    			 //System.out.println("Desencriptando clave secreta...");
     			 Cipher c = Cipher.getInstance("RSA");
     			 c.init(Cipher.DECRYPT_MODE, KP.getPrivate());
     			 conectionKey = (Key) i.getObject(c);
     			 
     			 
-    			 System.out.println("Clave secreta obtenida con exito!");
-    			 System.out.println(conectionKey);
+    			 //System.out.println("Clave secreta obtenida con exito!");
+    			 //System.out.println(conectionKey);
     			 
-    			 System.out.println("Encriptando socket..");
+    			 //System.out.println("Encriptando socket..");
     			 c = Cipher.getInstance("AES");
     			 c.init(Cipher.ENCRYPT_MODE, conectionKey);
     			 SealedObject socketEncrypted = new SealedObject("010", c);
-    			 System.out.println(socketEncrypted);
+    			 //System.out.println(socketEncrypted);
     			 
     			 
-    			 System.out.println("Enviando...");
+    			 System.out.println(client + ": Conexión segura!");
     			 
     			 out.writeObject(socketEncrypted);
     			 

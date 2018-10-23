@@ -75,29 +75,30 @@ public class Client {
     }
 
     public static void conection() throws Exception {
+    	println("Generando conexión segura...");
     	SS("000");
     	Key K = (Key) SR();
-    	println("Clave pública recibida...");
+    	//println("Clave pública recibida...");
     	
-    	println("Generando clave secreta...");
+    	//println("Generando clave secreta...");
     	KeyGenerator kgen = KeyGenerator.getInstance("AES");
         kgen.init(128);
         conectionKey = kgen.generateKey();
         
-        println("Cifrando clave secreta...");
+        //println("Cifrando clave secreta...");
     	Cipher c = Cipher.getInstance("RSA");
     	c.init(Cipher.ENCRYPT_MODE, K); 
     	SealedObject conectionKeyEncrypted  = new SealedObject(conectionKey, c);
     	
-    	println("Enviando clave secreta cifrada...");
+    	//println("Enviando clave secreta cifrada...");
     	SS(conectionKeyEncrypted);
     	
-    	println("A la espera de confirmacion...");
+    	//println("A la espera de confirmacion...");
     	sc=true;
     	if(SR().equals("010")) {
     		println("Conexión AES Segura!");
     	}else {
-    		println("Error de conexion!");
+    		println("Error de conexion, canal no seguro!");
     		sc=false;
     	}
     }
@@ -221,7 +222,7 @@ public class Client {
     	String r = System.console().readLine();
     	
     	while(Integer.parseInt(r)>9 || Integer.parseInt(r)<1){
-    		println(" Respuesta no válida: ");
+    		print(" Respuesta no válida: ");
     		r = System.console().readLine();
     	}
     	
