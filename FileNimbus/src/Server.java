@@ -1,12 +1,22 @@
 import java.io.*;
 import java.net.*;
 import java.security.*;
-import java.util.Base64;
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
 import javax.crypto.SealedObject;
+import java.sql.*;
+import java.util.Arrays;
 
 public class Server {
+	private static final String sqlPwd = "OHEdUjgBpeYZ2OQy";
+	private static final String sqlUser = "FileNimbusUser";
+	private static final String sqlHost = "localhost";
+	private static final String sqlPort = "3306";
+	private static final String sqlDb = "filenimbusdb";
+	private static Statement sql = null;
+	private static Connection con = null;
+	
+	
+	
 	private static int port = 8080;
 	private static String ip = "localhost";
 	
@@ -17,7 +27,21 @@ public class Server {
 	private final static KeyPair KP = buildKeyPair();
 	
 
-    public static void main(String[] args) throws Exception, ClassNotFoundException {
+    public static void main(String[] args) throws Exception{
+    	
+    	try {
+    		//Class.forName("com.mysql.jdbc.Driver"); 
+    	    con = DriverManager.getConnection(
+    	    		"jdbc:mysql://"+sqlHost+":"+sqlPort+"/"+sqlDb, "root", "");
+    	 
+    	    sql = con.createStatement();
+    	         
+    	 }catch(SQLException e) {
+    		System.out.println("Error conexion SQL.");
+    		return;
+    	 }
+    	
+    	
     	
     	//Cierra el puerto cuando se hace Ctr+C
     	Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -101,6 +125,9 @@ public class Server {
                 	}else if(i.equals("100")){
                 		//Login
                 		login();
+                	}else if(i.equals("110")) {
+                		//Sigin
+                		signin();
                 	}else if(i.equals("200")){
                 		//Comprobacion de fichero
                 		SS("E000");
@@ -180,7 +207,7 @@ public class Server {
     	 }
     	 public void login() throws Exception {
     		 if(userID!=Integer.MAX_VALUE) {
-    			 SS("E100");
+    			 SS("E101");
     			 return;
     		 }
     		 SS("101");
@@ -189,23 +216,69 @@ public class Server {
     		 
     		 if(user.getClass().equals(String.class) && user.getClass().equals(String.class)) {
     			 //Comparamos las claves
-    			 if(user.equals("gonzalo") 
-    					 && pasw.equals("?	?$N?$A?~?ma??\b?	???^9Lpj?????x^Yv??F?_&?Z.????S???\f???")) {
-    				 System.out.println(user);
-    				 System.out.println(pasw);
+    			 ResultSet rs = sql.executeQuery("SELECT * FROM user WHERE user='"+ user +"'");
+    			 if(rs.next()) {
     				 SS("102");
-    				 SS("USER_KEY_PAIR");//Mandamos el par de claves, y logueamos la sesion
-    				 userID=1;
+    				 byte[] pwd = rs.getBlob("pwd").getBytes(1, (int) rs.getBlob("pwd").length());
+    				 if(Arrays.equals(pwd, (byte[])pasw)){
+    					 SS("103");
+    					//Mandamos las claves
+    					 SS(rs.getBlob("private").getBytes(1, (int) rs.getBlob("private").length()));
+    					 SS(rs.getBlob("public").getBytes(1, (int) rs.getBlob("public").length()));
+    					 userID = rs.getInt("id");
+    					 
+    					 System.out.println("Registrado usuario: " + user);
+    				 }else {
+    					 SS("E103");//Contraseña no valida
+    					 System.out.println("Error clave");
+    				 }
+    				 
     			 }else {
-    				 System.out.println(user);
-    				 System.out.println(pasw);
-    				 SS("E102");
+    				 SS("E102");//User no valido
     			 }
-    		 }else {
-    			 SS("E101");
     		 }
     	 }
-    	 
+    	 public void signin() throws Exception{
+    		 if(userID!=Integer.MAX_VALUE) {
+    			 SS("E100");
+    			 return;
+    		 }
+    		 SS("111");
+    		 
+    		 String newuser =(String) SR();
+    		 byte[] pwdh = (byte[]) SR();
+    		 
+    		 ResultSet rs = sql.executeQuery ("SELECT user FROM user WHERE user = '"+newuser+"' LIMIT 1");
+    		 if(rs.first()) {
+    			 SS("E111");//USUARIO YA REGISTRADO
+    			 return;
+    		 }else {
+    			 SS("112");
+    		 }
+    		 
+    		 byte[] priv = (byte[]) SR();
+    		 byte[] pub = (byte[]) SR();
+    		 
+    		 
+    		 PreparedStatement ps = con.prepareStatement("INSERT INTO user(user, pwd, private, public) VALUES('"+ newuser +"', ?, ?, ?)",
+    				 PreparedStatement.RETURN_GENERATED_KEYS);
+    		 
+    		 
+    		 ps.setBytes(1, pwdh);
+    		 ps.setBytes(2, priv);
+    		 ps.setBytes(3, pub);
+    		 ps.executeUpdate();
+    		 rs = ps.getGeneratedKeys();
+             if(rs.first())
+             {
+                 userID = rs.getInt(1);
+                 SS("113");
+             }else {
+            	 SS("E113");
+             }
+    		 ps.close();
+    		 
+    	 }
     	 
     	 public void SS(Object o) throws Exception{
     		 if(sc) {

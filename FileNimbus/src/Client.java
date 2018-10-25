@@ -2,16 +2,17 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Base64;
 import java.security.*;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 
@@ -24,7 +25,7 @@ public class Client {
 	private static String pwd;
 	private static String username;
 	private static Key conectionKey = null; // Clave AES de conexion
-	private static KeyPair UserKP;// Par de claves de usuario
+	private static KeyPair userKP;// Par de claves de usuario
 
 	
 	private static ObjectOutputStream out;
@@ -34,10 +35,14 @@ public class Client {
 	
     public static void main(String arg[]) throws Exception {
 
-
+    	try {
         socket = new Socket(ip, portNum);
         out = new ObjectOutputStream(socket.getOutputStream());
         in = new ObjectInputStream(socket.getInputStream());
+    	}catch(ConnectException e) {
+    		println("Servidor desconectado, intentalo mas tarde");
+    		return;
+    	}
         
         
         conection();
@@ -68,6 +73,7 @@ public class Client {
 	        		account();
 	        		break;
 	        	case 8:
+	        		signin();
 	        		break;
 	        	case 9:
 	        		close();
@@ -124,37 +130,113 @@ public class Client {
             pwd = new String(System.console().readPassword());
             
     		//Hashear la pass
-    		SecureRandom random = new SecureRandom();
     		MessageDigest md = MessageDigest.getInstance("SHA-512");
-    		
-    		/*
-    		Aqui se puede poner una sal para anadir seguridad, 
-    		pero no la ponemos porque es aleatoria y no siempre saldria el mismo hash
-    		byte[] salt = new byte[16];
-    		random.nextBytes(salt);
-    		md.update(salt);
-    		*/
-    		byte[] pwdH = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
-    		//println("Clave hasheada: ");
-    		//println(new String(pwdH, StandardCharsets.UTF_8));
+    		//Aqui se puede poner una sal para anadir seguridad, 
+    		byte[] pwdh = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
 
+    		
     		SS(username);
-    		SS(new String(pwdH, StandardCharsets.UTF_8));
+    		SS(pwdh);
     		r=SR();
     		if(r.getClass().equals(String.class)) {
-    			if(r.equals("102")) {
-    				println("Login realizado con exito");
-    				println(SR());//Esto tendrian que ser un par de claves y almacenarlas...
-    			}else if(r.equals("E102")) {
-    				println("Usuario o contraseña incorrecto");
+    			if(r.equals("E102")) {
+    				println("Usuario incorrecto");
+    				username=null;
+    				pwd=null;
+    			}else {
+    				r=SR();
+    				if(r.getClass().equals(String.class) 
+    						&& r.equals("E103")) {
+    					println("Contraseña incorrecta");
+    					username=null;
+        				pwd=null;
+    				}else {
+    					println("Datos correctos");
+    					
+    					
+    					byte[]  priv = (byte[])SR();
+    					byte[]  pub = (byte[])SR();
+    					
+    					
+    					 //Crear AES KEY desde pwd
+    			        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+    			        KeySpec spec = new PBEKeySpec("clave".toCharArray(), "clave".getBytes(), 65536, 256);
+    			        SecretKey tmp = factory.generateSecret(spec);
+    			        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+    			        
+    			        //Desencriptamos
+    			        Cipher c = Cipher.getInstance("AES");
+    					c.init(Cipher.DECRYPT_MODE, secret);
+    					priv = c.doFinal(priv);//TODO Error aqui
+    					
+    					//Pasar de byte[] a Key
+    					KeyFactory kf = KeyFactory.getInstance("RSA"); 
+    					PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));//No funciona, esta encriptada
+    					PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
+    					println("par");
+    					userKP = new KeyPair(publicKey, privateKey); //Creamos el par de claves
+    					
+    					println("Bienvenido " + username);
+    				}	
     			}
-    		}else {
-    			println("Error desconocido");
     		}
     	}
     }
 
-
+    public static void signin() throws Exception {
+    	SS("110");
+    	Object r = SR();
+    	if(r.getClass().equals(String.class)
+    			&& r.equals("E100")) {
+    		println("Ya has hecho login");
+    		return;
+    	}
+    	
+    	//Obtenemos datos:
+		println(" ~ SIGN IN ~");
+    	print(" Username: ");
+    	username = System.console().readLine();
+    	print(" Password: ");
+        pwd = new String(System.console().readPassword());
+        
+        //Hashear la pass
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		byte[] pwdh = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
+		
+		SS(username);
+        SS(pwdh);
+        
+        r=SR();
+        if(r.getClass().equals(String.class) && r.equals("E111")) {
+        	println("Nombre de usuario ya registrado");
+        	return;
+        }
+    	
+        //Crear un par de claves
+    	KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048); //TODO Tamaño de par de claves
+        userKP = keyPairGenerator.genKeyPair();
+        
+        
+        //Crear AES KEY desde pwd
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        KeySpec spec = new PBEKeySpec("clave".toCharArray(), "clave".getBytes(), 65536, 256);
+        SecretKey tmp = factory.generateSecret(spec);
+        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+        
+        //Encriptamos
+        Cipher c = Cipher.getInstance("AES");
+		c.init(Cipher.ENCRYPT_MODE, secret);
+		byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());
+        
+		//Enviamos las claves
+        SS(userKP.getPublic().getEncoded());
+        SS(encrypted);
+        
+        if(SR().equals("113")) {
+        	println("Usuario creado: " + username);
+        }
+    }
     public static void check() throws Exception {
     	//TODO ------------------------- check
     	SS("200");
@@ -284,7 +366,7 @@ public class Client {
     	println("  5 - Borrar");
     	println("  6 - Compartir");
     	println("  7 - Ajustes de cuenta");
-    	println("  8 - Vacio");
+    	println("  8 - Registro");
     	println("  9 - Fin de conexión");
     }
     public static int menu() {
@@ -300,5 +382,4 @@ public class Client {
     	
     	return Integer.parseInt(r);
     }
-    
     }
