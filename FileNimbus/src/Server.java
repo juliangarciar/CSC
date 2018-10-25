@@ -83,6 +83,7 @@ public class Server {
     	final ObjectOutputStream out;
     	final int client;//Numero de cliente
     	private Key conectionKey = null;// Clave secreta de consexion
+    	private int userID=Integer.MAX_VALUE;
     	
     	 public ControladorCliente(Socket s, ObjectInputStream in, ObjectOutputStream out, int client) {
     		 this.s = s;
@@ -99,7 +100,7 @@ public class Server {
                 		conection();
                 	}else if(i.equals("100")){
                 		//Login
-                		SS("E000");
+                		login();
                 	}else if(i.equals("200")){
                 		//Comprobacion de fichero
                 		SS("E000");
@@ -177,7 +178,35 @@ public class Server {
     		 }
     		
     	 }
-    
+    	 public void login() throws Exception {
+    		 if(userID!=Integer.MAX_VALUE) {
+    			 SS("E100");
+    			 return;
+    		 }
+    		 SS("101");
+    		 Object user = SR();
+    		 Object pasw = SR();
+    		 
+    		 if(user.getClass().equals(String.class) && user.getClass().equals(String.class)) {
+    			 //Comparamos las claves
+    			 if(user.equals("gonzalo") 
+    					 && pasw.equals("?	?$N?$A?~?ma??\b?	???^9Lpj?????x^Yv??F?_&?Z.????S???\f???")) {
+    				 System.out.println(user);
+    				 System.out.println(pasw);
+    				 SS("102");
+    				 SS("USER_KEY_PAIR");//Mandamos el par de claves, y logueamos la sesion
+    				 userID=1;
+    			 }else {
+    				 System.out.println(user);
+    				 System.out.println(pasw);
+    				 SS("E102");
+    			 }
+    		 }else {
+    			 SS("E101");
+    		 }
+    	 }
+    	 
+    	 
     	 public void SS(Object o) throws Exception{
     		 if(sc) {
     			 Cipher c = Cipher.getInstance("AES");

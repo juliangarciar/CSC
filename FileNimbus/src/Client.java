@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.security.*;
@@ -106,19 +107,54 @@ public class Client {
     }
     public static void login() throws Exception {
     	//TODO ------------------------- login
-    	
-    	//Obtenemos datos:
-    	println(" ~ Login ~");
-    	print(" Username: ");
-    	username = System.console().readLine();
-    	print(" Password: ");
-        pwd = new String(System.console().readPassword());
-        
-        println(username + " -- " + pwd);
-        
     	SS("100");
-    	println(SR());
+    	Object r = SR();
+    	if(r.getClass().equals(String.class) 
+    			&& r.equals("E100")) {
+    		println("Ya has hecho login");
+    		return;
+    	}else if(r.getClass().equals(String.class) 
+    			&& r.equals("101")) {
+
+        	//Obtenemos datos:
+    		println(" ~ Login ~");
+        	print(" Username: ");
+        	username = System.console().readLine();
+        	print(" Password: ");
+            pwd = new String(System.console().readPassword());
+            
+    		//Hashear la pass
+    		SecureRandom random = new SecureRandom();
+    		MessageDigest md = MessageDigest.getInstance("SHA-512");
+    		
+    		/*
+    		Aqui se puede poner una sal para anadir seguridad, 
+    		pero no la ponemos porque es aleatoria y no siempre saldria el mismo hash
+    		byte[] salt = new byte[16];
+    		random.nextBytes(salt);
+    		md.update(salt);
+    		*/
+    		byte[] pwdH = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
+    		//println("Clave hasheada: ");
+    		//println(new String(pwdH, StandardCharsets.UTF_8));
+
+    		SS(username);
+    		SS(new String(pwdH, StandardCharsets.UTF_8));
+    		r=SR();
+    		if(r.getClass().equals(String.class)) {
+    			if(r.equals("102")) {
+    				println("Login realizado con exito");
+    				println(SR());//Esto tendrian que ser un par de claves y almacenarlas...
+    			}else if(r.equals("E102")) {
+    				println("Usuario o contraseña incorrecto");
+    			}
+    		}else {
+    			println("Error desconocido");
+    		}
+    	}
     }
+
+
     public static void check() throws Exception {
     	//TODO ------------------------- check
     	SS("200");
