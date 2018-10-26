@@ -97,7 +97,7 @@ public class Server {
     	}
     	return null;
     }
-
+	
     //Controlador de cliente
     public static class ControladorCliente extends Thread{
     	private boolean sc = false; //Conexion segura
@@ -136,7 +136,6 @@ public class Server {
                 	}else if(i.equals("300")){
                 		//Subida
                 		upload();
-                		SS("E000");
                 	}else if(i.equals("400")){
                 		//Descarga
                 		SS("E000");
@@ -145,7 +144,7 @@ public class Server {
                 		SS("E000");
                 	}else if(i.equals("600")){
                 		//Compartir
-                		SS("E000");
+                		share();
                 	}else if(i.equals("700")){
                 		//Cuenta
                 		SS("E000");
@@ -340,12 +339,13 @@ public class Server {
     		 }else {
     			 SS("601");
     		 }
-    		 
+
     		 int file = (int) SR();
     		 String usu = (String) SR();
     		 int usuid;
     		 byte[] ku;
     		 byte[] kf;
+
     		 //Buscamos el fichero y almacenamos la clave secreta 
     		 ResultSet rs = sql.executeQuery("SELECT secretKey "
     		 		+ "FROM fileuser "
@@ -361,7 +361,7 @@ public class Server {
 			 //Buscamos el usuario a compartir y almacenamos su clave publica
 			 rs = sql.executeQuery("SELECT id, public "
 	    		 		+ "FROM user "
-	    		 		+ "WHERE username='"+ usu +"'");
+	    		 		+ "WHERE user='"+ usu +"'");
 			 if(!rs.first()) {
 				 SS("E602");
 				 return;
@@ -374,6 +374,9 @@ public class Server {
 			 //Mandamos las claves
 			 SS(kf);
 			 SS(ku);
+			 
+			 byte[] k = (byte[]) SR();
+			 //rs = sql.executeQuery("INSERT")
     	 }
     	 
     	 

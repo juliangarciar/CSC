@@ -271,7 +271,6 @@ public class Client {
     		return;
     	}
     	print("Fichero a subir: ");
-    	System.console().readLine();
     	File file = new File(System.console().readLine());
     	if(!file.exists()) {
     		println("Fichero no encontrado");
@@ -291,8 +290,12 @@ public class Client {
          
         //Encripta K RSA
         c = Cipher.getInstance("RSA");
-        c.init(Cipher.ENCRYPT_MODE, userKP.getPrivate());
+        c.init(Cipher.ENCRYPT_MODE, userKP.getPublic());
         byte[] kcrypted = c.doFinal(k.getEncoded());
+        
+        //Desencriptar la clave
+    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
+    	c.doFinal(kcrypted);//Error desencriptando
          
         
         SS("300");
@@ -350,7 +353,7 @@ public class Client {
     		}catch(NumberFormatException e) {
     			print("Introduce un número:");
     		}
-    	}while(file!=Integer.MAX_VALUE);
+    	}while(file==Integer.MAX_VALUE);
     	
     	//Obtenemos el usuario
     	String usu;
@@ -382,7 +385,7 @@ public class Client {
     	//Encriptar la clave
     	PublicKey pku = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(ku));
     	c.init(Cipher.ENCRYPT_MODE, pku);
-    	k = c.doFinal(kf);
+    	k = c.doFinal(kf); //Error blockSize
     	
     	//Enviamos la clave
     	SS(k);
