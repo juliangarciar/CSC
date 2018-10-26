@@ -385,7 +385,7 @@ public class Client {
     	//Encriptar la clave
     	PublicKey pku = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(ku));
     	c.init(Cipher.ENCRYPT_MODE, pku);
-    	k = c.doFinal(kf); //Error blockSize
+    	k = c.doFinal(k); //Error blockSize
     	
     	//Enviamos la clave
     	SS(k);
