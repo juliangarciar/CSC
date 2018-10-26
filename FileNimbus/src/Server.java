@@ -128,6 +128,9 @@ public class Server {
                 	}else if(i.equals("110")) {
                 		//Sigin
                 		signin();
+                	}else if(i.equals("120")) {
+                		//Logout
+                		logout();
                 	}else if(i.equals("200")){
                 		//Comprobacion de fichero
                 		SS("E000");
@@ -168,7 +171,7 @@ public class Server {
 			 }
     	 }
    
-    	 public void conection() {
+    	 public void conection() throws Exception{
     		 System.out.println(client + ": Conectando...");
     		 try {
     			 out.writeObject(KP.getPublic());
@@ -223,11 +226,18 @@ public class Server {
     				 if(Arrays.equals(pwd, (byte[])pasw)){
     					 SS("103");
     					//Mandamos las claves
-    					 SS(rs.getBlob("private").getBytes(1, (int) rs.getBlob("private").length()));
-    					 SS(rs.getBlob("public").getBytes(1, (int) rs.getBlob("public").length()));
+    					 Blob privb = rs.getBlob("private");
+    					 Blob pubb = rs.getBlob("public");
+    					 
+    					 byte[] priv = privb.getBytes(1, (int) privb.length());
+    					 byte[] pub = pubb.getBytes(1, (int) pubb.length());
+    					 
+    					 SS(pub);
+    					 SS(priv);
+    					 
     					 userID = rs.getInt("id");
     					 
-    					 System.out.println("Registrado usuario: " + user);
+    					 System.out.println(client + ": Login: " + user);
     				 }else {
     					 SS("E103");//Contraseña no valida
     					 System.out.println("Error clave");
@@ -236,6 +246,15 @@ public class Server {
     			 }else {
     				 SS("E102");//User no valido
     			 }
+    		 }
+    	 }
+    	 public void logout() throws Exception {
+    		 if(userID == Integer.MAX_VALUE) {
+    			 SS("E121");
+    		 }else {
+    			 userID=Integer.MAX_VALUE;
+    			 SS("121");
+    			 System.out.println(client + ": Logout");
     		 }
     	 }
     	 public void signin() throws Exception{
@@ -256,13 +275,13 @@ public class Server {
     			 SS("112");
     		 }
     		 
-    		 byte[] priv = (byte[]) SR();
     		 byte[] pub = (byte[]) SR();
+    		 byte[] priv = (byte[]) SR();
+    		 
     		 
     		 
     		 PreparedStatement ps = con.prepareStatement("INSERT INTO user(user, pwd, private, public) VALUES('"+ newuser +"', ?, ?, ?)",
     				 PreparedStatement.RETURN_GENERATED_KEYS);
-    		 
     		 
     		 ps.setBytes(1, pwdh);
     		 ps.setBytes(2, priv);
@@ -273,6 +292,7 @@ public class Server {
              {
                  userID = rs.getInt(1);
                  SS("113");
+                 System.out.println(client + ": Signin id:" +userID+ " username:" + newuser);
              }else {
             	 SS("E113");
              }

@@ -54,6 +54,12 @@ public class Client {
 	        	case 1:
 	        		login();
 	        		break;
+	        	case 11:
+	        		signin();
+	        		break;
+	        	case 12:
+	        		logout();
+	        		break;
 	        	case 2:
 	        		check();
 	        		break;
@@ -73,7 +79,6 @@ public class Client {
 	        		account();
 	        		break;
 	        	case 8:
-	        		signin();
 	        		break;
 	        	case 9:
 	        		close();
@@ -154,8 +159,8 @@ public class Client {
     					println("Datos correctos");
     					
     					
-    					byte[]  priv = (byte[])SR();
     					byte[]  pub = (byte[])SR();
+    					byte[]  priv = (byte[])SR();
     					
     					
     					 //Crear AES KEY desde pwd
@@ -167,13 +172,13 @@ public class Client {
     			        //Desencriptamos
     			        Cipher c = Cipher.getInstance("AES");
     					c.init(Cipher.DECRYPT_MODE, secret);
-    					priv = c.doFinal(priv);//TODO Error aqui
+    					priv = c.doFinal(priv);
     					
     					//Pasar de byte[] a Key
     					KeyFactory kf = KeyFactory.getInstance("RSA"); 
-    					PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));//No funciona, esta encriptada
+    					PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));
     					PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
-    					println("par");
+    					
     					userKP = new KeyPair(publicKey, privateKey); //Creamos el par de claves
     					
     					println("Bienvenido " + username);
@@ -182,7 +187,27 @@ public class Client {
     		}
     	}
     }
-
+    public static void logout() throws Exception {
+    	if(username == null) {
+    		println("No estas logueado");
+    	}else{
+    		SS("120");
+    		Object r = SR();
+    		if(r.getClass().equals(String.class)) {
+    			if(((String) r).equals("121")) {
+    				println("Logout realizado con éxito");
+    				username = null;
+    				pwd = null;
+    				userKP = null;
+    			}else {
+    				println("No estabas logueado en el servidor");
+    				username = null;
+    				pwd = null;
+    				userKP = null;
+    			}
+    		}
+    	}
+    }
     public static void signin() throws Exception {
     	SS("110");
     	Object r = SR();
@@ -227,8 +252,8 @@ public class Client {
         //Encriptamos
         Cipher c = Cipher.getInstance("AES");
 		c.init(Cipher.ENCRYPT_MODE, secret);
-		byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());
-        
+		byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());		
+		
 		//Enviamos las claves
         SS(userKP.getPublic().getEncoded());
         SS(encrypted);
@@ -259,7 +284,7 @@ public class Client {
     	
 		//Encriptar key
 		c = Cipher.getInstance("AES");
-		byte[] pwdb = pwd.getBytes("UTF-8");//TODO No se encriptar la clave con pwd
+		byte[] pwdb = pwd.getBytes("UTF-8");
 		MessageDigest sha = MessageDigest.getInstance("SHA-1");
 		pwdb = sha.digest(pwdb);
 		pwdb = Arrays.copyOf(pwdb, 16); // primeros 16 bytes
@@ -359,27 +384,32 @@ public class Client {
     	println("--------------------------------");
     	println("---------- FileNimbus ----------");
     	println("--------------------------------");
-    	println("  1 - Login");
-    	println("  2 - Actualizar ficheros");
-    	println("  3 - Subir");
-    	println("  4 - Bajar");
-    	println("  5 - Borrar");
-    	println("  6 - Compartir");
-    	println("  7 - Ajustes de cuenta");
-    	println("  8 - Registro");
-    	println("  9 - Fin de conexión");
+    	println("  1  - Login");
+    	println("  11 - Signin");
+    	println("  12 - Logout");
+    	println("  2  - Actualizar ficheros");
+    	println("  3  - Subir");
+    	println("  4  - Bajar");
+    	println("  5  - Borrar");
+    	println("  6  - Compartir");
+    	println("  7  - Ajustes de cuenta");
+    	println("  8  - Vacio");
+    	println("  9  - Fin de conexión");
     }
     public static int menu() {
-    	println("");
-    	print(" Respuesta: ");
+    	if(username == null) {
+    	print(" Unkown: ");
+    	}else {
+    	print(" " + username + ": ");
+    	}
     	
     	String r = System.console().readLine();
     	
-    	while(Integer.parseInt(r)>9 || Integer.parseInt(r)<1){
-    		print(" Respuesta no válida: ");
-    		r = System.console().readLine();
+    	try {
+    		return Integer.parseInt(r);
+    	}catch(NumberFormatException e) {
+    		println("Introduce un número");
+    		return 0;
     	}
-    	
-    	return Integer.parseInt(r);
     }
     }
