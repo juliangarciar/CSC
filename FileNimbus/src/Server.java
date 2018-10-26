@@ -136,6 +136,7 @@ public class Server {
                 		SS("E000");
                 	}else if(i.equals("300")){
                 		//Subida
+                		upload();
                 		SS("E000");
                 	}else if(i.equals("400")){
                 		//Descarga
@@ -299,7 +300,41 @@ public class Server {
     		 ps.close();
     		 
     	 }
-    	 
+    	 public void upload() throws Exception{
+    		 if(userID== Integer.MAX_VALUE) {
+    			 //No registrado
+    			 SS("E301");
+    			 return;
+    		 }
+    		 SS("301");
+    		 
+    		 String filename =(String) SR();//Path
+    		 byte[] file = (byte[]) SR();//File habra que hacer un bucle;
+    		 byte[] key=(byte[]) SR();//Clave
+    		 
+    		 //Subir el fichero
+    		 PreparedStatement ps = con.prepareStatement("INSERT INTO file(data, name) "
+    		 		+ "VALUES(?, '"+ filename +"')",
+    				 PreparedStatement.RETURN_GENERATED_KEYS);
+    		 
+    		 ps.setBytes(1, file);
+    		 ps.executeUpdate();
+    		 
+    		 //Subir la clave
+    		 ResultSet rs = ps.getGeneratedKeys();    		 
+    		 if(rs.first()){
+                 int fileID = rs.getInt(1);
+        		 ps = con.prepareStatement("INSERT INTO fileuser(user, file, secretKey, shared) "
+         		 		+ "VALUES('"+userID+"', "+ fileID +", ?, '"+userID+"')");
+         		 ps.setBytes(1, key);
+         		 ps.executeUpdate();
+             }else{
+            	 SS("E302");//Error subiendo el fichero
+             }
+    		 
+    		 System.out.println(cliente + ": Ficher subido: " + filename);
+     		 SS("303");//Todo ok
+    	 }
     	 public void SS(Object o) throws Exception{
     		 if(sc) {
     			 Cipher c = Cipher.getInstance("AES");

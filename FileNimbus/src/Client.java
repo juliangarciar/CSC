@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.security.*;
 import java.security.spec.KeySpec;
@@ -156,9 +157,6 @@ public class Client {
     					username=null;
         				pwd=null;
     				}else {
-    					println("Datos correctos");
-    					
-    					
     					byte[]  pub = (byte[])SR();
     					byte[]  priv = (byte[])SR();
     					
@@ -267,44 +265,53 @@ public class Client {
     	SS("200");
     	println(SR());
     }
-    public static void upload() throws Exception {//Esto son solo test, me lo estoy inventando toodo
-    	//TODO ------------------------- upload
+    public static void upload() throws Exception {
+    	if(username == null) {
+    		println("No estas logueado");
+    		return;
+    	}
+    	
     	File file = new File("C:/Users/Usuario/Desktop/captura.png");
-    	
-    	
-    	//Generar clave para encriptar el file
-    	KeyGenerator kgen = KeyGenerator.getInstance("AES");
-        kgen.init(128);
-        Key k = kgen.generateKey();
-        
-        //Encriptar File
+        byte[] fileContent = Files.readAllBytes(file.toPath());
+         
+        //Genera AES
+        KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        kgen.init(128); //TODO Tamaño de clave secreta
+        SecretKey k = kgen.generateKey();
+         
+        //Encripta File AES
         Cipher c = Cipher.getInstance("AES");
-		c.init(Cipher.ENCRYPT_MODE, k);
-		SealedObject fileEncrypted = new SealedObject((Serializable) file, c);
-    	
-		//Encriptar key
-		c = Cipher.getInstance("AES");
-		byte[] pwdb = pwd.getBytes("UTF-8");
-		MessageDigest sha = MessageDigest.getInstance("SHA-1");
-		pwdb = sha.digest(pwdb);
-		pwdb = Arrays.copyOf(pwdb, 16); // primeros 16 bytes
-
-		SecretKeySpec pwdk = new SecretKeySpec(pwdb, "AES");
-		c.init(Cipher.ENCRYPT_MODE, pwdk);
-		SealedObject keyEncrypted = new SealedObject((Serializable) k, c);
-		
-		//Copiado desde aqui pasar a bytes un objeto serializable
-		ByteArrayOutputStream bs= new ByteArrayOutputStream();
-		ObjectOutputStream os = new ObjectOutputStream (bs);
-		os.writeObject(fileEncrypted); 
-		os.close();
-		//Copiado hasta aqui
+        c.init(Cipher.ENCRYPT_MODE, k);
+        byte[] fctypyed = c.doFinal(fileContent);
+         
+        //Encripta K RSA
+        c = Cipher.getInstance("RSA");
+        c.init(Cipher.ENCRYPT_MODE, userKP.getPrivate());
+        byte[] kcrypted = c.doFinal(k.getEncoded());
+         
         
-    	println(bs.toByteArray());
-    	println(keyEncrypted);
-    	
-    	SS("300");
-    	println(SR());
+        SS("300");
+        Object r = SR();
+        if(r.getClass().equals(String.class)) {
+        	if(((String)r).equals("E301")) {
+        		println("Error de sincronizacion");//Logueado en cliente y no en servidor
+        	}else {
+        		
+        		SS(file.toPath().getFileName().toString());//Enviar el nombre
+        		SS(fctypyed);//Enviar el file es demasiado grande y habra que fraccionarlo
+        		SS(kcrypted);//Enviar la clave    		
+      
+        		//A la espera de confirmacion
+        		r = SR();
+        		if(r.getClass().equals(String.class)) {
+        			if(((String)r).equals("303")){
+        				println("Fichero subido con éxito");
+        			}else if(((String)r).equals("E302")){
+        				println("Error subiendo el fichero");
+        			}
+        		}else{println("Error desconocido");}
+        	}
+        }else{println("Error desconocido");}       
     }
     public static void download() throws Exception {
     	//TODO ------------------------- download
