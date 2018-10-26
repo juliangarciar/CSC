@@ -30,7 +30,6 @@ public class Server {
     public static void main(String[] args) throws Exception{
     	
     	try {
-    		//Class.forName("com.mysql.jdbc.Driver"); 
     	    con = DriverManager.getConnection(
     	    		"jdbc:mysql://"+sqlHost+":"+sqlPort+"/"+sqlDb, "root", "");
     	 
