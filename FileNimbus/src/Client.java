@@ -270,8 +270,13 @@ public class Client {
     		println("No estas logueado");
     		return;
     	}
-    	
-    	File file = new File("C:/Users/Usuario/Desktop/captura.png");
+    	print("Fichero a subir: ");
+    	System.console().readLine();
+    	File file = new File(System.console().readLine());
+    	if(!file.exists()) {
+    		println("Fichero no encontrado");
+    		return;
+    	}
         byte[] fileContent = Files.readAllBytes(file.toPath());
          
         //Genera AES
@@ -325,9 +330,61 @@ public class Client {
     }
     public static void share() throws Exception {
     	//TODO ------------------------- share
+    	if(username==null) {
+    		println("No estas registrado");
+    		return;
+    	}    	
     	SS("600");
-    	println(SR());
+    	String r =(String) SR();
+    	if(r.equals("E600")) {
+    		println("Error de sincronizacion");
+    		return;
+    	}
     	
+    	//Obtenemos el fichero
+    	int file=Integer.MAX_VALUE;
+    	print("Id del fichero a compartir:");
+    	do {
+    		try {
+    			file = Integer.parseInt(System.console().readLine());
+    		}catch(NumberFormatException e) {
+    			print("Introduce un número:");
+    		}
+    	}while(file!=Integer.MAX_VALUE);
+    	
+    	//Obtenemos el usuario
+    	String usu;
+    	print("Id del usuario a compartir:");
+    	usu = System.console().readLine();
+    	
+    	SS(file);
+    	SS(usu);
+    	
+    	//Esperamos respuesta
+    	r = (String)SR();
+    	if(r.equals("E601")) {
+    		println("Fichero inexistente");
+    		return;
+    	}else if(r.equals("E602")){
+    		println("Usuario inexistente");
+    		return;
+    	}
+    	
+    	//Leemos las claves
+    	byte[] kf = (byte[]) SR();//Clave secreta de fichero
+    	byte[] ku = (byte[]) SR();//Clave publica de usuario
+    	
+    	//Desencriptar la clave
+    	Cipher c = Cipher.getInstance("RSA");
+    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
+    	byte[] k = c.doFinal(kf);
+    	
+    	//Encriptar la clave
+    	c.init(Cipher.ENCRYPT_MODE,new PublicKey(ku));
+    	k = c.doFinal(kf);
+    	
+    	//Enviamos la clave
+    	SS(k);
     }
     public static void account() throws Exception {
     	//TODO ------------------------- account

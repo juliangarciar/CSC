@@ -328,13 +328,57 @@ public class Server {
          		 		+ "VALUES('"+userID+"', "+ fileID +", ?, '"+userID+"')");
          		 ps.setBytes(1, key);
          		 ps.executeUpdate();
+         		 System.out.println(cliente + ": Fichero subido: " + filename);
+        		 SS("303");//Todo ok
              }else{
             	 SS("E302");//Error subiendo el fichero
              }
-    		 
-    		 System.out.println(cliente + ": Ficher subido: " + filename);
-     		 SS("303");//Todo ok
     	 }
+    	 public void share() throws Exception{
+    		 if(userID==Integer.MAX_VALUE) {
+    			 SS("E600");
+    			 return;
+    		 }else {
+    			 SS("601");
+    		 }
+    		 
+    		 int file = (int) SR();
+    		 String usu = (String) SR();
+    		 int usuid;
+    		 byte[] ku;
+    		 byte[] kf;
+    		 //Buscamos el fichero y almacenamos la clave secreta 
+    		 ResultSet rs = sql.executeQuery("SELECT secretKey "
+    		 		+ "FROM fileuser "
+    		 		+ "WHERE user='"+ userID +"' "
+    		 		+ "AND file= " + file);
+			 if(!rs.first()) {
+				 SS("E601");
+				 return;
+			 }else {
+				 kf = rs.getBlob("secretKey").getBytes(1, (int) rs.getBlob("secretKey").length());
+			 }
+			 
+			 //Buscamos el usuario a compartir y almacenamos su clave publica
+			 rs = sql.executeQuery("SELECT id, public "
+	    		 		+ "FROM user "
+	    		 		+ "WHERE username='"+ usu +"'");
+			 if(!rs.first()) {
+				 SS("E602");
+				 return;
+			 }else {
+				 SS("601");
+				usuid = rs.getInt("id");
+				ku = rs.getBlob("public").getBytes(1, (int) rs.getBlob("public").length());
+			 }
+			 
+			 //Mandamos las claves
+			 SS(kf);
+			 SS(ku);
+    	 }
+    	 
+    	 
+    	 
     	 public void SS(Object o) throws Exception{
     		 if(sc) {
     			 Cipher c = Cipher.getInstance("AES");
