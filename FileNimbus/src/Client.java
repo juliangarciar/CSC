@@ -380,7 +380,8 @@ public class Client {
     	byte[] k = c.doFinal(kf);
     	
     	//Encriptar la clave
-    	c.init(Cipher.ENCRYPT_MODE,new PublicKey(ku));
+    	PublicKey pku = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(ku));
+    	c.init(Cipher.ENCRYPT_MODE, pku);
     	k = c.doFinal(kf);
     	
     	//Enviamos la clave
