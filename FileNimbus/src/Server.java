@@ -132,7 +132,7 @@ public class Server {
                 		logout();
                 	}else if(i.equals("200")){
                 		//Comprobacion de fichero
-                		SS("E000");
+                		check();
                 	}else if(i.equals("300")){
                 		//Subida
                 		upload();
@@ -417,7 +417,29 @@ public class Server {
  				 System.out.println(client + ": Descargado fichero: "+name+" id: " + fileID);
  			 }
     	 }
-    	 
+    	 public void check() throws Exception{
+    		 if(userID==Integer.MAX_VALUE) {
+    			 SS("E201");
+    		 }else {
+    			 SS("201");
+    		 }
+    		 
+    		 //Buscamos en la base de datos
+    		 ResultSet rs = sql.executeQuery("SELECT f.name filename, f.id fileid, r.shared shared "
+      		 		+ "FROM fileuser r, file f, user u "
+      		 		+ "WHERE r.user = u.id "
+      		 		+ "AND r.file = f.id "
+      		 		+ "AND u.id = "+userID+" ");
+    		 
+    		 
+    		 int[] id =(int[]) rs.getArray("fileid").getArray();
+    		 String[] shared =(String[]) rs.getArray("shared").getArray();
+    		 String[] name =(String[]) rs.getArray("filename").getArray();
+    		 
+    		 SS(id);
+    		 SS(shared);
+    		 SS(name);
+    	 }
     	 
     	 public void SS(Object o) throws Exception{
     		 if(sc) {

@@ -7,6 +7,7 @@ import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.sql.Array;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -260,9 +261,54 @@ public class Client {
         }
     }
     public static void check() throws Exception {
-    	//TODO ------------------------- check
+    	if(username==null) {
+    		println("No estas logueado");
+    		return;
+    	}
+    	
     	SS("200");
-    	println(SR());
+    	Object r = SR();
+    	if(r.getClass().equals(String.class) && ((String)r).equals("E201")) {
+    		println("Error de sincronización");
+    		return;
+    	}
+    	
+    	//Leemos tres arrays de misma longitud
+    	int[] id = (int[]) SR();
+    	String[] shared = (String[]) SR();
+    	String[] name = (String[]) SR();
+    	
+    	
+    	//Esto es solo mostrar con formato por consola
+    	println("  | Id  | Compartido x | Nombre de Archivo |");
+    	println("  |_____|______________|___________________|");
+    	if(id.length==shared.length && id.length==name.length) {
+    		for(int i=0; i<id.length; i++) {
+    			print("  | ");
+    			print(id);
+    			
+    			int a = (int)(Math.log10(id[i]) +1);
+    			a=3-a; a = Math.max(a, 0); a= Math.min(a, 3);
+    			for(int j = 0 ; j<=a; j++) {print(" ");}
+    			print("| ");
+    			
+    			print(shared[i]);
+    			
+    			a=shared[i].length();
+    			a=12-a; a = Math.max(a, 0); a= Math.min(a, 3);
+    			for(int j = 0 ; j<=a; j++) {print(" ");}
+    			print("| ");
+    			
+    			print(name[i]);
+    			
+    			a=name[i].length();
+    			a=17-a; a = Math.max(a, 0); a= Math.min(a, 3);
+    			for(int j = 0 ; j<=a; j++) {print(" ");}
+    			print("|");
+    			
+    			println("");
+    		}
+    	}
     }
     public static void upload() throws Exception {
     	if(username == null) {
