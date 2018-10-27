@@ -574,13 +574,14 @@ public class Client {
     	println("  1  - Login");
     	println("  11 - Signin");
     	println("  12 - Logout");
-    	println("  2  - Actualizar ficheros");
+    	println("  2  - Muestra mis ficheros");
     	println("  3  - Subir");
     	println("  4  - Bajar");
     	println("  5  - Borrar");
     	println("  6  - Compartir");
-    	println("  7  - Ajustes de cuenta");
-    	println("  8  - Vacio");
+    	println("  7  - Cambio de contraseña");
+    	println("  71 - Cambio de usuario");
+    	println("  8  - Peligro Virus, no pulsar");
     	println("  9  - Fin de conexión");
     }
     public static int menu() {
