@@ -7,8 +7,8 @@ import java.sql.*;
 import java.util.Arrays;
 
 public class Server {
-	private static final String sqlPwd = "OHEdUjgBpeYZ2OQy";
-	private static final String sqlUser = "FileNimbusUser";
+	//private static final String sqlPwd = "OHEdUjgBpeYZ2OQy";
+	//private static final String sqlUser = "FileNimbusUser";
 	private static final String sqlHost = "localhost";
 	private static final String sqlPort = "3306";
 	private static final String sqlDb = "filenimbusdb";
@@ -138,7 +138,7 @@ public class Server {
                 		upload();
                 	}else if(i.equals("400")){
                 		//Descarga
-                		SS("E000");
+                		download();
                 	}else if(i.equals("500")){
                 		//Borrado
                 		SS("E000");
@@ -376,9 +376,47 @@ public class Server {
 			 SS(ku);
 			 
 			 byte[] k = (byte[]) SR();
-			 //rs = sql.executeQuery("INSERT")
+			 
+			 //Actualizar tabla
+    		 PreparedStatement ps = con.prepareStatement("INSERT INTO fileuser(user, file, key, shared) "
+    		 		+ "VALUES("+usuid+", "+file+", ?, "+userID+")",
+    				 PreparedStatement.RETURN_GENERATED_KEYS);
+    		 
+    		 ps.setBytes(1, k);
+    		 try {
+    		 ps.executeUpdate();
+    		 }catch(SQLException e) {
+    			 SS("E603");//Ya compartido
+    		 }
+    		 SS("603");
     	 }
-    	 
+    	 public void download() throws Exception{
+    		 if(userID == Integer.MAX_VALUE) {
+    			 SS("E401");
+    			 return;
+    		 }
+    		 SS("401");
+    		 
+    		 int fileID = (int) SR();
+    		 
+    		 ResultSet rs = sql.executeQuery("SELECT * "
+     		 		+ "FROM fileuser, file "
+     		 		+ "WHERE fileuser.user = '"+ userID +"' "
+     		 		+ "AND file.id = fileuser.file "
+     		 		+ "AND file.id = "+fileID+" LIMIT 1");
+ 			 if(!rs.first()) {
+ 				 SS("E402");
+ 				 return;
+ 			 }else {
+ 				 SS("402");
+ 				 SS(rs.getBlob("data").getBytes(1, (int) rs.getBlob("data").length()));
+ 				 SS(rs.getBlob("secretKey").getBytes(1, (int) rs.getBlob("secretKey").length()));
+ 				 SS(rs.getString("name"));
+ 				 
+ 				 String name =rs.getString("name");
+ 				 System.out.println(client + ": Descargado fichero: "+name+" id: " + fileID);
+ 			 }
+    	 }
     	 
     	 
     	 public void SS(Object o) throws Exception{

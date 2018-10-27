@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -118,7 +118,6 @@ public class Client {
     	}
     }
     public static void login() throws Exception {
-    	//TODO ------------------------- login
     	SS("100");
     	Object r = SR();
     	if(r.getClass().equals(String.class) 
@@ -292,10 +291,6 @@ public class Client {
         c = Cipher.getInstance("RSA");
         c.init(Cipher.ENCRYPT_MODE, userKP.getPublic());
         byte[] kcrypted = c.doFinal(k.getEncoded());
-        
-        //Desencriptar la clave
-    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
-    	c.doFinal(kcrypted);//Error desencriptando
          
         
         SS("300");
@@ -322,9 +317,81 @@ public class Client {
         }else{println("Error desconocido");}       
     }
     public static void download() throws Exception {
-    	//TODO ------------------------- download
+    	if(username==null) {
+    		println("No estas registrado");
+    		return;
+    	}    	
     	SS("400");
-    	println(SR());
+    	String r =(String) SR();
+    	if(r.equals("E401")) {
+    		println("Error de sincronizacion");
+    		return;
+    	}
+    	
+    	//Obtenemos el fichero
+    	int fileid=Integer.MAX_VALUE;
+    	print("Id del fichero a descargar:");
+    	do {
+    		try {
+    			fileid = Integer.parseInt(System.console().readLine());
+    		}catch(NumberFormatException e) {
+    			print("Introduce un número:");
+    		}
+    	}while(fileid==Integer.MAX_VALUE);
+    	
+    	//Mandamos el fichero
+    	SS(fileid);
+    	
+    	r = (String) SR();
+     	if(r.equals("E402")) {
+     		println("El fichero no existe");
+     		return;
+     	}
+     	
+    	//Obtenemos el fichero, la clave, y el nombre
+    	byte[] file = (byte[]) SR();
+    	byte[] key = (byte[]) SR();
+    	String filename = (String) SR();
+    	
+    	//Desencriptar la clave
+    	Cipher c = Cipher.getInstance("RSA");
+    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
+    	key = c.doFinal(key);
+    	
+    	//Desencriptamos el file
+    	c = Cipher.getInstance("AES");
+    	SecretKey sk = new SecretKeySpec(key, 0, key.length, "AES");
+    	c.init(Cipher.DECRYPT_MODE, sk);
+    	file = c.doFinal(file);
+    	
+    	
+    	//Obtenemos la direccion
+    	print("Direccion donde guardar: ");
+    	File path = new File(System.console().readLine());
+    	if(!path.isDirectory()) {
+    		println("Direccion no encontrada");
+    		return;
+    	}
+    	
+    	//TODO --- A partr de aqui hay que gestionar mas errores
+    	//Puede que nos denieguen el acceso
+    	//Puede que el file exista,  lo sustituimos?
+    	//Puede que noexista el directorio
+    	//... En general funciona
+    	//Guardamos el ficheros
+    	path = new File(path.getAbsolutePath() +"/"+filename);
+    	if (!path.exists()) {
+	    	FileOutputStream stream = new FileOutputStream(path);
+	    	try {
+	    	    stream.write(file);
+	    	    println("Fichero descargado con éxito!");
+	    	} finally {
+	    	    stream.close();
+	    	}
+    	}else {
+    		println("Error, el fichero ya existe.");
+    		System.out.println(path.toString());
+    	}
     }
     public static void delete() throws Exception {
     	//TODO ------------------------- delete
@@ -332,7 +399,6 @@ public class Client {
     	println(SR());
     }
     public static void share() throws Exception {
-    	//TODO ------------------------- share
     	if(username==null) {
     		println("No estas registrado");
     		return;
@@ -385,10 +451,17 @@ public class Client {
     	//Encriptar la clave
     	PublicKey pku = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(ku));
     	c.init(Cipher.ENCRYPT_MODE, pku);
-    	k = c.doFinal(k); //Error blockSize
+    	k = c.doFinal(k);
     	
     	//Enviamos la clave
     	SS(k);
+    	r = (String) SR();
+    	if(r.equals("E603")) {
+    		println("Este usuario ya tiene ese fichero");
+    	}else if(r.equals("603")) {
+    		println("Fichero compartido!");
+    	}
+    	
     }
     public static void account() throws Exception {
     	//TODO ------------------------- account
