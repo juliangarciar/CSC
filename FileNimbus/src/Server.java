@@ -4,6 +4,7 @@ import java.security.*;
 import javax.crypto.Cipher;
 import javax.crypto.SealedObject;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Server {
@@ -166,6 +167,8 @@ public class Server {
                 in.close();
                 s.close();
 			 }catch(Exception e) {
+				 System.out.println(e);
+				 System.out.println(e.getClass());
 				 System.out.println(e.getMessage());
 			 }
     	 }
@@ -378,8 +381,8 @@ public class Server {
 			 byte[] k = (byte[]) SR();
 			 
 			 //Actualizar tabla
-    		 PreparedStatement ps = con.prepareStatement("INSERT INTO fileuser(user, file, key, shared) "
-    		 		+ "VALUES("+usuid+", "+file+", ?, "+userID+")",
+    		 PreparedStatement ps = con.prepareStatement("INSERT INTO fileuser(user, file, secretKey, shared) "
+    		 		+ "VALUES("+usuid+", "+file+", ? , "+ userID +" )",
     				 PreparedStatement.RETURN_GENERATED_KEYS);
     		 
     		 ps.setBytes(1, k);
@@ -387,6 +390,7 @@ public class Server {
     		 ps.executeUpdate();
     		 }catch(SQLException e) {
     			 SS("E603");//Ya compartido
+    			 System.out.println(e);
     		 }
     		 SS("603");
     	 }
@@ -425,20 +429,27 @@ public class Server {
     		 }
     		 
     		 //Buscamos en la base de datos
-    		 ResultSet rs = sql.executeQuery("SELECT f.name filename, f.id fileid, r.shared shared "
+    		 ResultSet rs = sql.executeQuery("SELECT f.name filename, f.id fileid, u.user shared "
       		 		+ "FROM fileuser r, file f, user u "
-      		 		+ "WHERE r.user = u.id "
+      		 		+ "WHERE r.shared = u.id "
       		 		+ "AND r.file = f.id "
-      		 		+ "AND u.id = "+userID+" ");
+      		 		+ "AND r.user = "+userID+" ");
+
+    		 
+    		 ArrayList<Integer>  id =new ArrayList<Integer>();
+    		 ArrayList<String> shared =new ArrayList<String>();
+    		 ArrayList<String> name =new ArrayList<String>();
+    		 
+    		 while(rs.next()) {
+    			 id.add(rs.getInt("fileid"));
+    			 shared.add(rs.getString("shared"));
+        		 name.add(rs.getString("filename"));
+    		 }
     		 
     		 
-    		 int[] id =(int[]) rs.getArray("fileid").getArray();
-    		 String[] shared =(String[]) rs.getArray("shared").getArray();
-    		 String[] name =(String[]) rs.getArray("filename").getArray();
-    		 
-    		 SS(id);
-    		 SS(shared);
-    		 SS(name);
+    		 SS(id.toArray());
+    		 SS(shared.toArray());
+    		 SS(name.toArray());
     	 }
     	 
     	 public void SS(Object o) throws Exception{

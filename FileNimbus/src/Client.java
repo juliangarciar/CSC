@@ -274,9 +274,9 @@ public class Client {
     	}
     	
     	//Leemos tres arrays de misma longitud
-    	int[] id = (int[]) SR();
-    	String[] shared = (String[]) SR();
-    	String[] name = (String[]) SR();
+    	Object[] id = (Object[]) SR();
+    	Object[] shared = (Object[]) SR();
+    	Object[] name = (Object[]) SR();
     	
     	
     	//Esto es solo mostrar con formato por consola
@@ -285,24 +285,24 @@ public class Client {
     	if(id.length==shared.length && id.length==name.length) {
     		for(int i=0; i<id.length; i++) {
     			print("  | ");
-    			print(id);
+    			print(id[i]);
     			
-    			int a = (int)(Math.log10(id[i]) +1);
+    			int a = (int)(Math.log10((int)id[i]) +1);
     			a=3-a; a = Math.max(a, 0); a= Math.min(a, 3);
     			for(int j = 0 ; j<=a; j++) {print(" ");}
     			print("| ");
     			
     			print(shared[i]);
     			
-    			a=shared[i].length();
-    			a=12-a; a = Math.max(a, 0); a= Math.min(a, 3);
+    			a=((String)shared[i]).length();
+    			a=12-a; a = Math.max(a, 0); a= Math.min(a, 13);
     			for(int j = 0 ; j<=a; j++) {print(" ");}
     			print("| ");
     			
     			print(name[i]);
     			
-    			a=name[i].length();
-    			a=17-a; a = Math.max(a, 0); a= Math.min(a, 3);
+    			a=((String)name[i]).length();
+    			a=17-a; a = Math.max(a, 0); a= Math.min(a, 18);
     			for(int j = 0 ; j<=a; j++) {print(" ");}
     			print("|");
     			
