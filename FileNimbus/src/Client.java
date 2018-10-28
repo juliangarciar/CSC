@@ -2,12 +2,10 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.*;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.sql.Array;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -51,41 +49,48 @@ public class Client {
         boolean w = true;
         printMenu();
         while(w){
-	        switch( menu() ){
-	        	case 1:
-	        		login();
-	        		break;
-	        	case 11:
-	        		signin();
-	        		break;
-	        	case 12:
-	        		logout();
-	        		break;
-	        	case 2:
-	        		check();
-	        		break;
-	        	case 3:
-	        		upload();
-	        		break;
-	        	case 4:
-	        		download();
-	        		break;
-	        	case 5:
-	        		delete();
-	        		break;
-	        	case 6:
-	        		share();
-	        		break;
-	        	case 7:
-	        		account();
-	        		break;
-	        	case 8:
-	        		break;
-	        	case 9:
-	        		close();
-	        		w=false;
-	        		break;
-	        }
+        	try {
+		        switch( menu() ){
+		        	case 1:
+		        		login();
+		        		break;
+		        	case 11:
+		        		signin();
+		        		break;
+		        	case 12:
+		        		logout();
+		        		break;
+		        	case 2:
+		        		check();
+		        		break;
+		        	case 3:
+		        		upload();
+		        		break;
+		        	case 4:
+		        		download();
+		        		break;
+		        	case 5:
+		        		delete();
+		        		break;
+		        	case 6:
+		        		share();
+		        		break;
+		        	case 71:
+		        		changePass();
+		        		break;
+		        	case 72:
+		        		changeUser();
+		        		break;
+		        	case 8:
+		        		break;
+		        	case 9:
+		        		close();
+		        		w=false;
+		        		break;
+		        }
+        	}catch(Exception e) {
+        		println("Error: " + e.getMessage());
+        	}
         }
     }
 
@@ -160,9 +165,9 @@ public class Client {
     					byte[]  priv = (byte[])SR();
     					
     					
-    					 //Crear AES KEY desde pwd
+    					//Crear AES KEY desde pwd
     			        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-    			        KeySpec spec = new PBEKeySpec("clave".toCharArray(), "clave".getBytes(), 65536, 256);
+    			        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
     			        SecretKey tmp = factory.generateSecret(spec);
     			        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
     			        
@@ -242,7 +247,7 @@ public class Client {
         
         //Crear AES KEY desde pwd
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        KeySpec spec = new PBEKeySpec("clave".toCharArray(), "clave".getBytes(), 65536, 256);
+        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
         SecretKey tmp = factory.generateSecret(spec);
         SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
         
@@ -363,7 +368,7 @@ public class Client {
     }
     public static void download() throws Exception {
     	if(username==null) {
-    		println("No estas registrado");
+    		println("No estas logueado");
     		return;
     	}    	
     	SS("400");
@@ -441,7 +446,7 @@ public class Client {
 	    	}
 	    	
 	    	
-	    	//Meto para sobreescibir
+	    	//Metodo para sobreescibir
 	    	/*
 	    	if(filepath.exists()) {
 	    		filepath.delete();
@@ -500,7 +505,7 @@ public class Client {
     }
     public static void share() throws Exception {
     	if(username==null) {
-    		println("No estas registrado");
+    		println("No estas logueado");
     		return;
     	}    	
     	SS("600");
@@ -563,11 +568,59 @@ public class Client {
     	}
     	
     }
-    public static void account() throws Exception {
-    	//TODO ------------------------- account
-    	SS("700");
-    	println(SR());
+    public static void changePass() throws Exception {
+    	if(username==null) {
+    		println("No estas logueado");
+    		return;
+    	}
     	
+    	SS("710");
+    	
+    	String r =(String) SR();
+    	
+    	if(r.equals("E711")) {
+    		println("Error de sincronización");
+    		return;
+    	}
+    	
+    	print("Password actual: ");
+        String actual = new String(System.console().readPassword());
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		byte[] actualByte = md.digest(actual.getBytes(StandardCharsets.UTF_8));
+		
+		print("Password nueva: ");
+		String nueva = new String(System.console().readPassword());
+		byte[] nuevaByte = md.digest(nueva.getBytes(StandardCharsets.UTF_8));
+			
+		//Crear AES KEY desde nueva
+		SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+		KeySpec spec = new PBEKeySpec(nueva.toCharArray(), nueva.getBytes(), 65536, 256);
+		SecretKey tmp = factory.generateSecret(spec);
+		SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+		
+        //Encriptamos
+		Cipher c = Cipher.getInstance("AES");
+		c.init(Cipher.ENCRYPT_MODE, secret);
+		byte[] priv = c.doFinal(userKP.getPrivate().getEncoded());	
+		
+		SS(actualByte);
+		SS(nuevaByte);
+		SS(priv);
+		
+		r =(String) SR();
+		if(r.equals("E712")) {
+			println("Contraseña incorrecta");
+		}else if(r.equals("E713")) {
+			println("Error desconocido");
+		}else{
+			pwd = nueva;
+			println("Contraseña cambiada con éxito!");
+		}	
+    }
+    public static void changeUser() throws Exception {
+    	//TODO ------------------------- account
+    	SS("710");
+    	println(SR());
     }
     public static void close() throws Exception{
     	SS("900");
@@ -625,18 +678,18 @@ public class Client {
     	println("--------------------------------");
     	println("---------- FileNimbus ----------");
     	println("--------------------------------");
-    	println("  1  - Login");
-    	println("  11 - Signin");
-    	println("  12 - Logout");
-    	println("  2  - Muestra mis ficheros");
-    	println("  3  - Subir");
-    	println("  4  - Bajar");
-    	println("  5  - Borrar");
-    	println("  6  - Compartir");
-    	println("  7  - Cambio de contraseña");
-    	println("  71 - Cambio de usuario");
-    	println("  8  - Peligro Virus, no pulsar");
-    	println("  9  - Fin de conexión");
+    	println("  1  --- Login");
+    	println("  11 --- Signin");
+    	println("  12 --- Logout");
+    	println("  2  --- Muestra mis ficheros");
+    	println("  3  --- Subir");
+    	println("  4  --- Bajar");
+    	println("  5  --- Borrar");
+    	println("  6  --- Compartir");
+    	println("  71 --- Cambio de contraseña");
+    	println("  72 --- Cambio de usuario");
+    	println("  8  --- Peligro Virus, no pulsar");
+    	println("  9  --- Fin de conexión");
     }
     public static int menu() {
     	if(username == null) {

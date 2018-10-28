@@ -117,8 +117,8 @@ public class Server {
     	 } 
     	 public void run() {
 			 try {
-				// Reading in Integer Object from input stream.
-                String i = (String)in.readObject();
+				
+                String i = (String)SR();
                 while(!i.isEmpty()) {
                 	if(i.equals("000")) {
                 		conection();
@@ -146,9 +146,13 @@ public class Server {
                 	}else if(i.equals("600")){
                 		//Compartir
                 		share();
-                	}else if(i.equals("700")){
-                		//Cuenta
+                	}else if(i.equals("710")){
+                		//Clave
+                		changePassword();
+                	}else if(i.equals("720")){
+                		//Usuario
                 		SS("E000");
+                		//changeUser();
                 	}else if(i.equals("800")){
                 		//Vacio
                 		SS("E000");
@@ -470,7 +474,38 @@ public class Server {
     		 }
     		 SS("502");
     	 }
-    	 
+    	 public void changePassword() throws Exception{
+    		 if(userID==Integer.MAX_VALUE) {
+    			 SS("E711");
+    		 }else {
+    			 SS("711");
+    		 }
+    		 
+    		 byte[] actual = (byte[]) SR();
+    		 byte[] nueva = (byte[]) SR();
+    		 byte[] priv = (byte[]) SR();
+    		 
+    		 PreparedStatement ps = con.prepareStatement("UPDATE user SET "
+    		 		+ "pwd = ?, "
+    		 		+ "private = ? "
+    		 		+ "WHERE id = "+userID
+    		 		+ " AND pwd = ?");
+    		 ps.setBytes(1, nueva);
+    		 ps.setBytes(2, priv);
+    		 ps.setBytes(3, actual);
+    		 int i = ps.executeUpdate();
+    		 
+    		 if(i < 1) {
+    			 SS("E712");
+    		 }else if(i>1) {
+    			 SS("E713");
+    		 }else {
+    			 SS("712");
+    		 } 
+    	 }
+    	 public void changeUser() throws Exception{
+    		 
+    	 }
     	 
     	 public void SS(Object o) throws Exception{
     		 if(sc) {
