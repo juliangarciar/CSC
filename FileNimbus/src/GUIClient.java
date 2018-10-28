@@ -20,7 +20,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-public class Client {
+public class GUIClient {
 	private static final boolean print = true;//Valor que indica si se muestran o no por consola 
 	private static final int portNum = 8080;
 	private static final String ip = "localhost";
@@ -38,6 +38,18 @@ public class Client {
 	
 	
     public static void main(String arg[]) throws Exception {
+    	EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					FileNimbus frame = new FileNimbus();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+    	
+    	
 
     	try {
         socket = new Socket(ip, portNum);
@@ -51,52 +63,7 @@ public class Client {
         
         conection();
         
-        boolean w = true;
-        printMenu();
-        while(w){
-        	try {
-		        switch( menu() ){
-		        	case 1:
-		        		login();
-		        		break;
-		        	case 11:
-		        		signin();
-		        		break;
-		        	case 12:
-		        		logout();
-		        		break;
-		        	case 2:
-		        		check();
-		        		break;
-		        	case 3:
-		        		upload();
-		        		break;
-		        	case 4:
-		        		download();
-		        		break;
-		        	case 5:
-		        		delete();
-		        		break;
-		        	case 6:
-		        		share();
-		        		break;
-		        	case 71:
-		        		changePass();
-		        		break;
-		        	case 72:
-		        		changeUser();
-		        		break;
-		        	case 8:
-		        		break;
-		        	case 9:
-		        		close();
-		        		w=false;
-		        		break;
-		        }
-        	}catch(Exception e) {
-        		println("Error: " + e.getMessage());
-        	}
-        }
+       
     }
 
     public static void conection() throws Exception {
