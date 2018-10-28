@@ -17,7 +17,6 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-
 public class Client {
 	private static final boolean print = true;//Valor que indica si se muestran o no por consola 
 	private static final int portNum = 8080;
@@ -414,35 +413,90 @@ public class Client {
     	//Obtenemos la direccion
     	print("Direccion donde guardar: ");
     	File path = new File(System.console().readLine());
+    	
+    	//Puede que no sea una dir valida
     	if(!path.isDirectory()) {
-    		println("Direccion no encontrada");
+    		println("No es direccion!");
     		return;
     	}
+    	//Puede que la dir no exista
+    	if(!path.exists()) {
+    		println("La direccion no existe!");
+    	}
     	
-    	//TODO --- A partr de aqui hay que gestionar mas errores
-    	//Puede que nos denieguen el acceso
-    	//Puede que el file exista,  lo sustituimos?
-    	//Puede que noexista el directorio
-    	//... En general funciona
-    	//Guardamos el ficheros
-    	path = new File(path.getAbsolutePath() +"/"+filename);
-    	if (!path.exists()) {
-	    	FileOutputStream stream = new FileOutputStream(path);
-	    	try {
-	    	    stream.write(file);
-	    	    println("Fichero descargado con éxito!");
-	    	} finally {
-	    	    stream.close();
+    	try {
+    	File filepath = new File(path.getAbsolutePath() +"/"+ filename);
+	    	
+	    	//Metodo para usar nombres unicos
+	    	int i = 0;
+	    	
+	    	String name = filepath.getName().substring(0, filepath.getName().lastIndexOf("."));
+    		String ext = filepath.getName().substring(filepath.getName().lastIndexOf("."));
+    		
+	    	while (filepath.exists()) {
+	    		i++;
+	    		filename = name + " ("+i+")" + ext;
+	    		filepath = new File(path.getAbsolutePath() +"/"+ filename);
+	    		System.out.println(path.toString());
 	    	}
-    	}else {
-    		println("Error, el fichero ya existe.");
-    		System.out.println(path.toString());
+	    	
+	    	
+	    	//Meto para sobreescibir
+	    	/*
+	    	if(filepath.exists()) {
+	    		filepath.delete();
+	    	}
+	    	*/
+	    	try {
+		    	FileOutputStream stream = new FileOutputStream(filepath);
+			    stream.write(file);
+			    stream.close();
+		    	println("Fichero descargado con éxito!");
+	    	}catch(FileNotFoundException ef) {
+	    		println("No se encuentra el fichero, o acceso denegado");
+	    	}
+    	
+    	}catch(SecurityException e) {//Puede que nos denieguen el acceso
+    		println("No tienes permisos para acceder a esa carpeta");
     	}
     }
     public static void delete() throws Exception {
     	//TODO ------------------------- delete
+    	if(username==null) {
+    		println("No estas logeado");
+    		return;
+    	}
+    	
     	SS("500");
-    	println(SR());
+    	
+    	String r = (String) SR();
+    	if(r.equals("E501")) {
+    		println("Error de sincronizacion");
+    		return;
+    	}
+    	
+    	//Obtenemos el fichero
+    	int file=Integer.MAX_VALUE;
+    	print("Id del fichero a eliminar:");
+    	do {
+    		try {
+    			file = Integer.parseInt(System.console().readLine());
+    		}catch(NumberFormatException e) {
+    			print("Introduce un número:");
+    		}
+    	}while(file==Integer.MAX_VALUE);
+    	
+    	SS(file);
+    	
+    	r=(String) SR();
+    	
+    	if(r.equals("E502")) {
+    		println("No tienes ese fichero");
+    	}else if(r.equals("502")) {
+    		println("Fichero eliminado!");
+    	}else {
+    		println("Error desconocido");
+    	}
     }
     public static void share() throws Exception {
     	if(username==null) {

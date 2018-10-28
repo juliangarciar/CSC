@@ -59,7 +59,7 @@ public class Server {
         // Se crea el socket
         listener = new ServerSocket(port, 0, InetAddress.getByName(ip));
         
-        System.out.println("Servidor correindo en la ip: " + listener.getInetAddress() + ":" +port);
+        System.out.println("Servidor correindo en: " + listener.getInetAddress() + ":" +port);
         
         //Socket de cliente
         Socket clientSocket = null;
@@ -142,7 +142,7 @@ public class Server {
                 		download();
                 	}else if(i.equals("500")){
                 		//Borrado
-                		SS("E000");
+                		delete();
                 	}else if(i.equals("600")){
                 		//Compartir
                 		share();
@@ -451,6 +451,26 @@ public class Server {
     		 SS(shared.toArray());
     		 SS(name.toArray());
     	 }
+    	 public void delete() throws Exception{
+    		 if(userID==Integer.MAX_VALUE) {
+    			 SS("E501");
+    			 return;
+    		 }else {
+    			 SS("501");
+    		 }
+    		 
+    		 int r= (Integer) SR();
+    		 
+    		 String query = "DELETE FROM fileuser WHERE user="+userID+" AND file="+ r;
+    		 try {
+    			 sql.executeQuery(query);
+    		 }catch(SQLException e){
+    			 SS("E502");
+    			 return;
+    		 }
+    		 SS("502");
+    	 }
+    	 
     	 
     	 public void SS(Object o) throws Exception{
     		 if(sc) {
