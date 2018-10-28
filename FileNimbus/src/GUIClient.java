@@ -1,5 +1,3 @@
-import java.awt.BorderLayout;
-import java.awt.EventQueue;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -16,9 +14,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
 public class GUIClient {
 	private static final boolean print = true;//Valor que indica si se muestran o no por consola 
@@ -36,65 +31,39 @@ public class GUIClient {
 	private static ObjectInputStream in;
 	private static Socket socket = null;
 	
-	
-    public static void main(String arg[]) throws Exception {
-    	EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					FileNimbus frame = new FileNimbus();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-    	
-    	
 
+    public static int conection() throws Exception {
     	try {
-        socket = new Socket(ip, portNum);
-        out = new ObjectOutputStream(socket.getOutputStream());
-        in = new ObjectInputStream(socket.getInputStream());
+            socket = new Socket(ip, portNum);
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
     	}catch(ConnectException e) {
     		println("Servidor desconectado, intentalo mas tarde");
-    		return;
+    		return 001;//Servidor Desconectado
     	}
-        
-        
-        conection();
-        
-       
-    }
-
-    public static void conection() throws Exception {
-    	println("Generando conexión segura...");
+    	
     	SS("000");
     	Key K = (Key) SR();
-    	//println("Clave pública recibida...");
-    	
-    	//println("Generando clave secreta...");
+
     	KeyGenerator kgen = KeyGenerator.getInstance("AES");
         kgen.init(128); //TODO Tamaño de clave secreta
         conectionKey = kgen.generateKey();
-        
-        //println("Cifrando clave secreta...");
+      
     	Cipher c = Cipher.getInstance("RSA");
     	c.init(Cipher.ENCRYPT_MODE, K); 
     	SealedObject conectionKeyEncrypted  = new SealedObject(conectionKey, c);
-    	
-    	//println("Enviando clave secreta cifrada...");
+
     	SS(conectionKeyEncrypted);
     	
-    	//println("A la espera de confirmacion...");
     	sc=true;
     	if(SR().equals("010")) {
-    		println("Conexión AES Segura!");
+    		return 010; //Conexion segura
     	}else {
-    		println("Error de conexion, canal no seguro!");
     		sc=false;
+    		return 011;//Error de conexion segura.
     	}
     }
-    public static void login() throws Exception {
+    public static int login() throws Exception {
     	SS("100");
     	Object r = SR();
     	if(r.getClass().equals(String.class) 
@@ -161,7 +130,7 @@ public class GUIClient {
     		}
     	}
     }
-    public static void logout() throws Exception {
+    public static int logout() throws Exception {
     	if(username == null) {
     		println("No estas logueado");
     	}else{
@@ -182,7 +151,7 @@ public class GUIClient {
     		}
     	}
     }
-    public static void signin() throws Exception {
+    public static int signin() throws Exception {
     	SS("110");
     	Object r = SR();
     	if(r.getClass().equals(String.class)
@@ -236,7 +205,7 @@ public class GUIClient {
         	println("Usuario creado: " + username);
         }
     }
-    public static void check() throws Exception {
+    public static int check() throws Exception {
     	if(username==null) {
     		println("No estas logueado");
     		return;
@@ -286,7 +255,7 @@ public class GUIClient {
     		}
     	}
     }
-    public static void upload() throws Exception {
+    public static int upload() throws Exception {
     	if(username == null) {
     		println("No estas logueado");
     		return;
@@ -338,7 +307,7 @@ public class GUIClient {
         	}
         }else{println("Error desconocido");}       
     }
-    public static void download() throws Exception {
+    public static int download() throws Exception {
     	if(username==null) {
     		println("No estas logueado");
     		return;
@@ -437,7 +406,7 @@ public class GUIClient {
     		println("No tienes permisos para acceder a esa carpeta");
     	}
     }
-    public static void delete() throws Exception {
+    public static int delete() throws Exception {
     	//TODO ------------------------- delete
     	if(username==null) {
     		println("No estas logeado");
@@ -475,7 +444,7 @@ public class GUIClient {
     		println("Error desconocido");
     	}
     }
-    public static void share() throws Exception {
+    public static int share() throws Exception {
     	if(username==null) {
     		println("No estas logueado");
     		return;
@@ -540,7 +509,7 @@ public class GUIClient {
     	}
     	
     }
-    public static void changePass() throws Exception {
+    public static int changePass() throws Exception {
     	if(username==null) {
     		println("No estas logueado");
     		return;
@@ -589,7 +558,7 @@ public class GUIClient {
 			println("Contraseña cambiada con éxito!");
 		}	
     }
-    public static void changeUser() throws Exception {
+    public static int changeUser() throws Exception {
     	if(username==null) {
     		println("No estas logueado");
     		return;
@@ -617,7 +586,7 @@ public class GUIClient {
     		username = uname;
     	}
     }
-    public static void close() throws Exception{
+    public static int close() throws Exception{
     	SS("900");
 		if(SR().equals("910")) {
 			socket.close();
@@ -666,40 +635,6 @@ public class GUIClient {
     public static void println(Object o) {
     	if(print) {
     		System.out.println(o);
-    	}
-    }
-    public static void printMenu() {
-    	println(" ");
-    	println("--------------------------------");
-    	println("---------- FileNimbus ----------");
-    	println("--------------------------------");
-    	println("  1  --- Login");
-    	println("  11 --- Signin");
-    	println("  12 --- Logout");
-    	println("  2  --- Muestra mis ficheros");
-    	println("  3  --- Subir");
-    	println("  4  --- Bajar");
-    	println("  5  --- Borrar");
-    	println("  6  --- Compartir");
-    	println("  71 --- Cambio de contraseña");
-    	println("  72 --- Cambio de usuario");
-    	println("  8  --- Peligro Virus, no pulsar");
-    	println("  9  --- Fin de conexión");
-    }
-    public static int menu() {
-    	if(username == null) {
-    	print(" Unkown: ");
-    	}else {
-    	print(" " + username + ": ");
-    	}
-    	
-    	String r = System.console().readLine();
-    	
-    	try {
-    		return Integer.parseInt(r);
-    	}catch(NumberFormatException e) {
-    		println("Introduce un número");
-    		return 0;
     	}
     }
 }

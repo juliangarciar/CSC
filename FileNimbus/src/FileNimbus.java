@@ -22,6 +22,10 @@ public class FileNimbus extends JFrame {
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		
+		GUIClient client = new GUIClient();
+
+
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
