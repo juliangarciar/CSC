@@ -115,7 +115,7 @@ public class Server {
     		 this.out = out;
     		 this.client = client;
     	 } 
-    	 public void run() {
+    	 public void run(){
 			 try {
 				
                 String i = (String)SR();
@@ -151,8 +151,7 @@ public class Server {
                 		changePassword();
                 	}else if(i.equals("720")){
                 		//Usuario
-                		SS("E000");
-                		//changeUser();
+                		changeUser();
                 	}else if(i.equals("800")){
                 		//Vacio
                 		SS("E000");
@@ -171,9 +170,7 @@ public class Server {
                 in.close();
                 s.close();
 			 }catch(Exception e) {
-				 System.out.println(e);
-				 System.out.println(e.getClass());
-				 System.out.println(e.getMessage());
+				 e.printStackTrace();
 			 }
     	 }
    
@@ -504,7 +501,27 @@ public class Server {
     		 } 
     	 }
     	 public void changeUser() throws Exception{
+    		 if(userID==Integer.MAX_VALUE) {
+    			 SS("E721");
+    		 }else {
+    			 SS("721");
+    		 }
     		 
+    		 String name = (String) SR();
+    		 
+    		 ResultSet rs = sql.executeQuery("SELECT id FROM user WHERE user.user='"+name+"'");
+    		 if(rs.first()) {
+    			 SS("E722");
+    			 return;
+    		 }
+    		 String query = "UPDATE user SET user='"+name+"' WHERE id = "+userID;
+    		 System.out.println(query);
+    		 int r = sql.executeUpdate("UPDATE user SET user.user='"+name+"' WHERE id = "+userID);
+    		 if(r==1) {
+    			 SS("722");
+    		 }else {
+    			 SS("723");
+    		 }
     	 }
     	 
     	 public void SS(Object o) throws Exception{

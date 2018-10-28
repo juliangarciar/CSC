@@ -618,9 +618,32 @@ public class Client {
 		}	
     }
     public static void changeUser() throws Exception {
-    	//TODO ------------------------- account
-    	SS("710");
-    	println(SR());
+    	if(username==null) {
+    		println("No estas logueado");
+    		return;
+    	}
+    	
+    	SS("720");
+    	String r = (String) SR();
+    	
+    	if(r.equals("E721")) {
+    		println("Error de sincronizacion");
+    		return;
+    	}
+    	
+    	print("Nuevo username: ");
+    	String uname = System.console().readLine();
+    	
+    	SS(uname);
+    	
+    	r = (String) SR();
+    	
+    	if(r.equals("E722")) {
+    		println("Nombre de usuario en uso");
+    	}else {
+    		println("Nombre cambiado con éxito");
+    		username = uname;
+    	}
     }
     public static void close() throws Exception{
     	SS("900");
