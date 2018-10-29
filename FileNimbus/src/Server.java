@@ -392,6 +392,7 @@ public class Server {
     		 }catch(SQLException e) {
     			 SS("E603");//Ya compartido
     			 System.out.println(e);
+    			 return;
     		 }
     		 SS("603");
     	 }
