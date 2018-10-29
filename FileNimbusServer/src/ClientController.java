@@ -459,9 +459,8 @@ public class ClientController extends Thread{
 	
 	public KeyPair buildKeyPair(){
 		try {
-	        int keySize = 2048; //TODO Key size
 	        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-	        keyPairGenerator.initialize(keySize);      
+	        keyPairGenerator.initialize(2048);      
 	        return keyPairGenerator.genKeyPair();
 		}
 		catch(Exception e) {
