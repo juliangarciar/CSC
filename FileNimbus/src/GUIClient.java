@@ -16,7 +16,6 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class GUIClient {
-	private static final boolean print = true;//Valor que indica si se muestran o no por consola 
 	private static final int portNum = 8080;
 	private static final String ip = "localhost";
 	
@@ -38,7 +37,6 @@ public class GUIClient {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
     	}catch(ConnectException e) {
-    		println("Servidor desconectado, intentalo mas tarde");
     		return 001;//Servidor Desconectado
     	}
     	
@@ -63,109 +61,111 @@ public class GUIClient {
     		return 011;//Error de conexion segura.
     	}
     }
-    public static int login() throws Exception {
+    public static int login(String inUsername, String inPassword) throws Exception {
     	SS("100");
     	Object r = SR();
     	if(r.getClass().equals(String.class) 
     			&& r.equals("E100")) {
-    		println("Ya has hecho login");
-    		return;
-    	}else if(r.getClass().equals(String.class) 
-    			&& r.equals("101")) {
+    		return;//Ya has hecho login
+    	}
 
-        	//Obtenemos datos:
-    		println(" ~ Login ~");
-        	print(" Username: ");
-        	username = System.console().readLine();
-        	print(" Password: ");
-            pwd = new String(System.console().readPassword());
-            
-    		//Hashear la pass
-    		MessageDigest md = MessageDigest.getInstance("SHA-512");
-    		//Aqui se puede poner una sal para anadir seguridad, 
-    		byte[] pwdh = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
+    	username = inUsername;
+        pwd = inPassword;
+        
+		//Hashear la pass
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		//Aqui se puede poner una sal para anadir seguridad, 
+		byte[] pwdh = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
 
-    		
-    		SS(username);
-    		SS(pwdh);
-    		r=SR();
-    		if(r.getClass().equals(String.class)) {
-    			if(r.equals("E102")) {
-    				println("Usuario incorrecto");
-    				username=null;
+		
+		SS(username);
+		SS(pwdh);
+		
+		r=SR();
+		if(r.getClass().equals(String.class)) {
+			if(r.equals("E102")) {
+				username=null;
+				pwd=null;
+				return;//Usuario incorrecto
+			}else {
+				r=SR();
+				if(r.getClass().equals(String.class) 
+						&& r.equals("E103")) {
+					username=null;
     				pwd=null;
-    			}else {
-    				r=SR();
-    				if(r.getClass().equals(String.class) 
-    						&& r.equals("E103")) {
-    					println("Contraseña incorrecta");
-    					username=null;
-        				pwd=null;
-    				}else {
-    					byte[]  pub = (byte[])SR();
-    					byte[]  priv = (byte[])SR();
-    					
-    					
-    					//Crear AES KEY desde pwd
-    			        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-    			        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
-    			        SecretKey tmp = factory.generateSecret(spec);
-    			        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-    			        
-    			        //Desencriptamos
-    			        Cipher c = Cipher.getInstance("AES");
-    					c.init(Cipher.DECRYPT_MODE, secret);
-    					priv = c.doFinal(priv);
-    					
-    					//Pasar de byte[] a Key
-    					KeyFactory kf = KeyFactory.getInstance("RSA"); 
-    					PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));
-    					PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
-    					
-    					userKP = new KeyPair(publicKey, privateKey); //Creamos el par de claves
-    					
-    					println("Bienvenido " + username);
-    				}	
-    			}
-    		}
+    				return;//Contrasena incorrecta
+				}else {
+					byte[]  pub = (byte[])SR();
+					byte[]  priv = (byte[])SR();
+					
+					
+					//Crear AES KEY desde pwd
+			        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+			        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
+			        SecretKey tmp = factory.generateSecret(spec);
+			        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+			        
+			        //Desencriptamos
+			        Cipher c = Cipher.getInstance("AES");
+					c.init(Cipher.DECRYPT_MODE, secret);
+					priv = c.doFinal(priv);
+					
+					//Pasar de byte[] a Key
+					KeyFactory kf = KeyFactory.getInstance("RSA"); 
+					PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));
+					PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
+					
+					userKP = new KeyPair(publicKey, privateKey); //Creamos el par de claves
+					
+					return; //Login correcto
+				}	
+			}
     	}
     }
     public static int logout() throws Exception {
     	if(username == null) {
-    		println("No estas logueado");
-    	}else{
-    		SS("120");
-    		Object r = SR();
-    		if(r.getClass().equals(String.class)) {
-    			if(((String) r).equals("121")) {
-    				println("Logout realizado con éxito");
-    				username = null;
-    				pwd = null;
-    				userKP = null;
-    			}else {
-    				println("No estabas logueado en el servidor");
-    				username = null;
-    				pwd = null;
-    				userKP = null;
-    			}
-    		}
+    		return; //No estas logueado
     	}
+		SS("120");
+		Object r = SR();
+		if(r.getClass().equals(String.class)) {
+			if(((String) r).equals("121")) {
+				username = null;
+				pwd = null;
+				userKP = null;
+				return; //Logout realizado
+			}else {
+				username = null;
+				pwd = null;
+				userKP = null;
+				return; //Error de sincronizacion
+			}
+		}
     }
-    public static int signin() throws Exception {
+    public static int signin(String inUsername, String inPassword, String inPassword2) throws Exception {
+    	if(username!=null) {
+    		return; //Ya estas logueado
+    	}
+
+
     	SS("110");
     	Object r = SR();
     	if(r.getClass().equals(String.class)
     			&& r.equals("E100")) {
-    		println("Ya has hecho login");
-    		return;
+    		return;//Error de sincronizacion
+    	}
+    	
+    	if(!inPassword.equals(inPassword2)) {
+    		return; //Las contraseñas no coinciden
+    	}
+    	
+    	if(inPassword.length()<9) {
+    		return; //Contraseña muy corta
     	}
     	
     	//Obtenemos datos:
-		println(" ~ SIGN IN ~");
-    	print(" Username: ");
-    	username = System.console().readLine();
-    	print(" Password: ");
-        pwd = new String(System.console().readPassword());
+    	username = inUsername;
+        pwd = inPassword;
         
         //Hashear la pass
 		MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -176,8 +176,7 @@ public class GUIClient {
         
         r=SR();
         if(r.getClass().equals(String.class) && r.equals("E111")) {
-        	println("Nombre de usuario ya registrado");
-        	return;
+        	return; //Nombre de usuario ya registrado
         }
     	
         //Crear un par de claves
@@ -201,21 +200,20 @@ public class GUIClient {
         SS(userKP.getPublic().getEncoded());
         SS(encrypted);
         
-        if(SR().equals("113")) {
-        	println("Usuario creado: " + username);
+        r=SR();
+        if(r.getClass().equals(String.class) && r.equals("113")) {
+        	return; //Usuario creado
         }
     }
     public static int check() throws Exception {
     	if(username==null) {
-    		println("No estas logueado");
-    		return;
+    		return;//No estas logueado
     	}
     	
     	SS("200");
     	Object r = SR();
     	if(r.getClass().equals(String.class) && ((String)r).equals("E201")) {
-    		println("Error de sincronización");
-    		return;
+    		return;//Error de sincrionizacion
     	}
     	
     	//Leemos tres arrays de misma longitud
@@ -223,48 +221,16 @@ public class GUIClient {
     	Object[] shared = (Object[]) SR();
     	Object[] name = (Object[]) SR();
     	
-    	
-    	//Esto es solo mostrar con formato por consola
-    	println("  | Id  | Compartido x | Nombre de Archivo |");
-    	println("  |_____|______________|___________________|");
-    	if(id.length==shared.length && id.length==name.length) {
-    		for(int i=0; i<id.length; i++) {
-    			print("  | ");
-    			print(id[i]);
-    			
-    			int a = (int)(Math.log10((int)id[i]) +1);
-    			a=3-a; a = Math.max(a, 0); a= Math.min(a, 3);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("| ");
-    			
-    			print(shared[i]);
-    			
-    			a=((String)shared[i]).length();
-    			a=12-a; a = Math.max(a, 0); a= Math.min(a, 13);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("| ");
-    			
-    			print(name[i]);
-    			
-    			a=((String)name[i]).length();
-    			a=17-a; a = Math.max(a, 0); a= Math.min(a, 18);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("|");
-    			
-    			println("");
-    		}
-    	}
+    	return;//Habra que generar un array con la lista
     }
-    public static int upload() throws Exception {
+    public static int upload(String inPath) throws Exception {
     	if(username == null) {
-    		println("No estas logueado");
-    		return;
+    		return;//No estas logueado
     	}
-    	print("Fichero a subir: ");
-    	File file = new File(System.console().readLine());
+
+    	File file = new File(inPath);
     	if(!file.exists()) {
-    		println("Fichero no encontrado");
-    		return;
+    		return;//Fichero no encontrado
     	}
         byte[] fileContent = Files.readAllBytes(file.toPath());
          
@@ -288,7 +254,7 @@ public class GUIClient {
         Object r = SR();
         if(r.getClass().equals(String.class)) {
         	if(((String)r).equals("E301")) {
-        		println("Error de sincronizacion");//Logueado en cliente y no en servidor
+        		return;//Error de sincronizacion
         	}else {
         		
         		SS(file.toPath().getFileName().toString());//Enviar el nombre
@@ -299,44 +265,34 @@ public class GUIClient {
         		r = SR();
         		if(r.getClass().equals(String.class)) {
         			if(((String)r).equals("303")){
-        				println("Fichero subido con éxito");
+        				return;//Fichero subido con exito
         			}else if(((String)r).equals("E302")){
-        				println("Error subiendo el fichero");
+        				return;//Error subiendo el fichero
         			}
-        		}else{println("Error desconocido");}
+        		}
         	}
-        }else{println("Error desconocido");}       
+        }
+        return;//Error desconocido
     }
-    public static int download() throws Exception {
+    public static int download(int inFile, String inPath, boolean inReplace) throws Exception {
     	if(username==null) {
-    		println("No estas logueado");
-    		return;
+    		return;//No estas logueado
     	}    	
     	SS("400");
     	String r =(String) SR();
     	if(r.equals("E401")) {
-    		println("Error de sincronizacion");
-    		return;
+    		return;//Error de sincronizacion
     	}
     	
     	//Obtenemos el fichero
-    	int fileid=Integer.MAX_VALUE;
-    	print("Id del fichero a descargar:");
-    	do {
-    		try {
-    			fileid = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un número:");
-    		}
-    	}while(fileid==Integer.MAX_VALUE);
+    	int fileid=inFile;
     	
     	//Mandamos el fichero
     	SS(fileid);
     	
     	r = (String) SR();
      	if(r.equals("E402")) {
-     		println("El fichero no existe");
-     		return;
+     		return;//El fichero no existe
      	}
      	
     	//Obtenemos el fichero, la clave, y el nombre
@@ -357,120 +313,96 @@ public class GUIClient {
     	
     	
     	//Obtenemos la direccion
-    	print("Direccion donde guardar: ");
-    	File path = new File(System.console().readLine());
-    	
-    	//Puede que no sea una dir valida
+    	File path = new File(inPath);
+
+
     	if(!path.isDirectory()) {
-    		println("No es direccion!");
-    		return;
+    		return;//No es direccion
     	}
-    	//Puede que la dir no exista
+
+
     	if(!path.exists()) {
-    		println("La direccion no existe!");
+    		return; //No existe la direccion
     	}
     	
     	try {
     	File filepath = new File(path.getAbsolutePath() +"/"+ filename);
 	    	
-	    	//Metodo para usar nombres unicos
-	    	int i = 0;
+    		if(inReplace) {
+    			//Metodo para sobreescibir
+    	    	if(filepath.exists()) {
+    	    		filepath.delete();
+    	    	}
+    		}else {
+    			//Metodo para usar nombres unicos
+    	    	int i = 0;
+    	    	
+    	    	String name = filepath.getName().substring(0, filepath.getName().lastIndexOf("."));
+        		String ext = filepath.getName().substring(filepath.getName().lastIndexOf("."));
+        		
+    	    	while (filepath.exists()) {
+    	    		i++;
+    	    		filename = name + " ("+i+")" + ext;
+    	    		filepath = new File(path.getAbsolutePath() +"/"+ filename);
+    	    		System.out.println(path.toString());
+    	    	}
+    		}
+    	
 	    	
-	    	String name = filepath.getName().substring(0, filepath.getName().lastIndexOf("."));
-    		String ext = filepath.getName().substring(filepath.getName().lastIndexOf("."));
-    		
-	    	while (filepath.exists()) {
-	    		i++;
-	    		filename = name + " ("+i+")" + ext;
-	    		filepath = new File(path.getAbsolutePath() +"/"+ filename);
-	    		System.out.println(path.toString());
-	    	}
-	    	
-	    	
-	    	//Metodo para sobreescibir
-	    	/*
-	    	if(filepath.exists()) {
-	    		filepath.delete();
-	    	}
-	    	*/
+	    		
 	    	try {
 		    	FileOutputStream stream = new FileOutputStream(filepath);
 			    stream.write(file);
 			    stream.close();
-		    	println("Fichero descargado con éxito!");
+		    	return;//Fichero descargado
 	    	}catch(FileNotFoundException ef) {
-	    		println("No se encuentra el fichero, o acceso denegado");
+	    		return; //No se encuentra el fichero, o acceso denegado
 	    	}
     	
     	}catch(SecurityException e) {//Puede que nos denieguen el acceso
-    		println("No tienes permisos para acceder a esa carpeta");
+    		return; //Acceso denegado
     	}
     }
-    public static int delete() throws Exception {
-    	//TODO ------------------------- delete
+    public static int delete(int inFile) throws Exception {
     	if(username==null) {
-    		println("No estas logeado");
-    		return;
+    		return;//No estas logueado
     	}
     	
     	SS("500");
     	
     	String r = (String) SR();
     	if(r.equals("E501")) {
-    		println("Error de sincronizacion");
-    		return;
+    		return;//Error de sincronizacion
     	}
     	
     	//Obtenemos el fichero
-    	int file=Integer.MAX_VALUE;
-    	print("Id del fichero a eliminar:");
-    	do {
-    		try {
-    			file = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un número:");
-    		}
-    	}while(file==Integer.MAX_VALUE);
-    	
-    	SS(file);
+    	SS(inFile);
     	
     	r=(String) SR();
     	
     	if(r.equals("E502")) {
-    		println("No tienes ese fichero");
+    		return; //No tienes el fichero
     	}else if(r.equals("502")) {
-    		println("Fichero eliminado!");
+    		return; //Fichero eliminado
     	}else {
-    		println("Error desconocido");
+    		return; //Error desconocido
     	}
     }
-    public static int share() throws Exception {
+    public static int share(int inFile, String inUser) throws Exception {
     	if(username==null) {
-    		println("No estas logueado");
-    		return;
-    	}    	
+    		return;//No estas logueado
+    	} 	
     	SS("600");
     	String r =(String) SR();
     	if(r.equals("E600")) {
-    		println("Error de sincronizacion");
-    		return;
+    		return;//Error de sincronizacion
     	}
     	
     	//Obtenemos el fichero
-    	int file=Integer.MAX_VALUE;
-    	print("Id del fichero a compartir:");
-    	do {
-    		try {
-    			file = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un número:");
-    		}
-    	}while(file==Integer.MAX_VALUE);
+    	int file=inFile;
     	
     	//Obtenemos el usuario
-    	String usu;
-    	print("Id del usuario a compartir:");
-    	usu = System.console().readLine();
+    	String usu=inUser;
     	
     	SS(file);
     	SS(usu);
@@ -479,10 +411,10 @@ public class GUIClient {
     	r = (String)SR();
     	if(r.equals("E601")) {
     		println("Fichero inexistente");
-    		return;
+    		return;//Fichero inexistente
     	}else if(r.equals("E602")){
     		println("Usuario inexistente");
-    		return;
+    		return;//Usuario inexistente
     	}
     	
     	//Leemos las claves
@@ -503,16 +435,15 @@ public class GUIClient {
     	SS(k);
     	r = (String) SR();
     	if(r.equals("E603")) {
-    		println("Este usuario ya tiene ese fichero");
+    		return; //El usuario ya tenia este fichero
     	}else if(r.equals("603")) {
-    		println("Fichero compartido!");
+    		return; //Fichero compartido
     	}
     	
     }
-    public static int changePass() throws Exception {
+    public static int changePass(String inPassword, String inNewPassword, String inNewPassword2) throws Exception {
     	if(username==null) {
-    		println("No estas logueado");
-    		return;
+    		return;//No estas logueado
     	}
     	
     	SS("710");
@@ -520,17 +451,22 @@ public class GUIClient {
     	String r =(String) SR();
     	
     	if(r.equals("E711")) {
-    		println("Error de sincronización");
-    		return;
+    		return;//Error de sincronizacion
     	}
     	
-    	print("Password actual: ");
-        String actual = new String(System.console().readPassword());
+    	if(!inNewPassword.equals(inNewPassword2)) {
+			return; //Las contraseñas no coinciden
+		}
+    	
+    	if(inNewPassword.length()<9) {
+    		return; //La contraseña es muy corta
+    	}
+    	
+        String actual = inPassword;
 		MessageDigest md = MessageDigest.getInstance("SHA-512");
 		byte[] actualByte = md.digest(actual.getBytes(StandardCharsets.UTF_8));
 		
-		print("Password nueva: ");
-		String nueva = new String(System.console().readPassword());
+		String nueva = inNewPassword;
 		byte[] nuevaByte = md.digest(nueva.getBytes(StandardCharsets.UTF_8));
 			
 		//Crear AES KEY desde nueva
@@ -550,40 +486,37 @@ public class GUIClient {
 		
 		r =(String) SR();
 		if(r.equals("E712")) {
-			println("Contraseña incorrecta");
+			return;//Contraseña incorrecta
 		}else if(r.equals("E713")) {
-			println("Error desconocido");
+			return;//Error desconocido
 		}else{
 			pwd = nueva;
-			println("Contraseña cambiada con éxito!");
+			return;//Contraseña cambiada
 		}	
     }
-    public static int changeUser() throws Exception {
+    public static int changeUser(String inUser) throws Exception {
     	if(username==null) {
-    		println("No estas logueado");
-    		return;
+    		return;//No estas logueado
     	}
     	
     	SS("720");
     	String r = (String) SR();
     	
     	if(r.equals("E721")) {
-    		println("Error de sincronizacion");
-    		return;
+    		return;//Error de sincronizacion
     	}
     	
-    	print("Nuevo username: ");
-    	String uname = System.console().readLine();
+    	String uname = inUser;
     	
     	SS(uname);
     	
     	r = (String) SR();
     	
     	if(r.equals("E722")) {
-    		println("Nombre de usuario en uso");
+    		return;//Nombre ya en uso
     	}else {
-    		println("Nombre cambiado con éxito");
     		username = uname;
+    		return; //Nombre cambiado
     	}
     }
     public static int close() throws Exception{
@@ -592,12 +525,12 @@ public class GUIClient {
 			socket.close();
 			in.close();
 			out.close();
-			println("Conexion cerrada con éxito");
+			return;//Conexion cerrada
 		}else {
 			socket.close();
 			in.close();
 			out.close();
-			println("Error de cierre, cerrando igualemente");
+			return; //Error de sincronizacion, cerrando
 		}
     }
 
@@ -625,16 +558,6 @@ public class GUIClient {
 	    	return socket.getObject(c);
     	}else {
     		return in.readObject();
-    	}
-    }
-    public static void print(Object o) {
-    	if(print) {
-    		System.out.print(o);
-    	}
-    }
-    public static void println(Object o) {
-    	if(print) {
-    		System.out.println(o);
     	}
     }
 }
