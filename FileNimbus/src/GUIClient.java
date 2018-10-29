@@ -16,22 +16,22 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class GUIClient {
-	private static final int portNum = 8080;
-	private static final String ip = "localhost";
+	private final int portNum = 8080;
+	private final String ip = "localhost";
 	
-	private static boolean sc;//Conexion segura
-	private static String pwd;
-	private static String username;
-	private static Key conectionKey = null; // Clave AES de conexion
-	private static KeyPair userKP;// Par de claves de usuario
+	private boolean sc;//Conexion segura
+	private String pwd;
+	private String username;
+	private Key conectionKey = null; // Clave AES de conexion
+	private KeyPair userKP;// Par de claves de usuario
 
 	
-	private static ObjectOutputStream out;
+	private ObjectOutputStream out;
 	private static ObjectInputStream in;
 	private static Socket socket = null;
 	
 
-    public static int conection() throws Exception {
+    public int conection() throws Exception {
     	try {
             socket = new Socket(ip, portNum);
             out = new ObjectOutputStream(socket.getOutputStream());
@@ -61,7 +61,7 @@ public class GUIClient {
     		return 011;//Error de conexion segura.
     	}
     }
-    public static int login(String inUsername, String inPassword) throws Exception {
+    public int login(String inUsername, String inPassword) throws Exception {
     	SS("100");
     	Object r = SR();
     	if(r.getClass().equals(String.class) 
@@ -122,7 +122,7 @@ public class GUIClient {
 			}
     	}
     }
-    public static int logout() throws Exception {
+    public int logout() throws Exception {
     	if(username == null) {
     		return; //No estas logueado
     	}
@@ -142,7 +142,7 @@ public class GUIClient {
 			}
 		}
     }
-    public static int signin(String inUsername, String inPassword, String inPassword2) throws Exception {
+    public int signin(String inUsername, String inPassword, String inPassword2) throws Exception {
     	if(username!=null) {
     		return; //Ya estas logueado
     	}
@@ -205,7 +205,7 @@ public class GUIClient {
         	return; //Usuario creado
         }
     }
-    public static int check() throws Exception {
+    public int check() throws Exception {
     	if(username==null) {
     		return;//No estas logueado
     	}
@@ -223,7 +223,7 @@ public class GUIClient {
     	
     	return;//Habra que generar un array con la lista
     }
-    public static int upload(String inPath) throws Exception {
+    public int upload(String inPath) throws Exception {
     	if(username == null) {
     		return;//No estas logueado
     	}
@@ -274,7 +274,7 @@ public class GUIClient {
         }
         return;//Error desconocido
     }
-    public static int download(int inFile, String inPath, boolean inReplace) throws Exception {
+    public int download(int inFile, String inPath, boolean inReplace) throws Exception {
     	if(username==null) {
     		return;//No estas logueado
     	}    	
@@ -363,7 +363,7 @@ public class GUIClient {
     		return; //Acceso denegado
     	}
     }
-    public static int delete(int inFile) throws Exception {
+    public int delete(int inFile) throws Exception {
     	if(username==null) {
     		return;//No estas logueado
     	}
@@ -388,7 +388,7 @@ public class GUIClient {
     		return; //Error desconocido
     	}
     }
-    public static int share(int inFile, String inUser) throws Exception {
+    public int share(int inFile, String inUser) throws Exception {
     	if(username==null) {
     		return;//No estas logueado
     	} 	
@@ -441,7 +441,7 @@ public class GUIClient {
     	}
     	
     }
-    public static int changePass(String inPassword, String inNewPassword, String inNewPassword2) throws Exception {
+    public int changePass(String inPassword, String inNewPassword, String inNewPassword2) throws Exception {
     	if(username==null) {
     		return;//No estas logueado
     	}
@@ -494,7 +494,7 @@ public class GUIClient {
 			return;//Contraseña cambiada
 		}	
     }
-    public static int changeUser(String inUser) throws Exception {
+    public int changeUser(String inUser) throws Exception {
     	if(username==null) {
     		return;//No estas logueado
     	}
@@ -519,7 +519,7 @@ public class GUIClient {
     		return; //Nombre cambiado
     	}
     }
-    public static int close() throws Exception{
+    public int close() throws Exception{
     	SS("900");
 		if(SR().equals("910")) {
 			socket.close();
@@ -534,13 +534,10 @@ public class GUIClient {
 		}
     }
 
+ 
     
     
-    
-    
-    
-    
-    public static void SS(Object o) throws Exception{
+    private void SS(Object o) throws Exception{
     	if(sc) {
 	    	Cipher c = Cipher.getInstance("AES");
 			c.init(Cipher.ENCRYPT_MODE, conectionKey);
@@ -550,7 +547,7 @@ public class GUIClient {
     		out.writeObject(o);
     	}
     }
-    public static Object SR() throws Exception {
+    private Object SR() throws Exception {
     	if(sc) {
 	    	SealedObject socket = (SealedObject) in.readObject();
 	    	Cipher c = Cipher.getInstance("AES");
