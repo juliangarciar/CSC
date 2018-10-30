@@ -26,7 +26,10 @@ public class ClientGUI extends JFrame {
 	private JPanel mainPanel;
 	// Inputs
 	private JLabel clientState;
-
+	private JTextField userName;
+	private JLabel userNameLabel;
+	private JTextField password;
+	private JLabel passwordLabel;
 	// ClientGUI class constructor
 	public ClientGUI(int portNum, String ip){
 		this.mainClient = new Client(portNum, ip);
@@ -35,10 +38,27 @@ public class ClientGUI extends JFrame {
 		getContentPane().setLayout(new GridLayout(1, 0, 0, 0));
 		
 		this.mainPanel = new JPanel();
-		getContentPane().add(mainPanel);
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
 		
+		BoxLayout verticalMenu = new BoxLayout(mainPanel, BoxLayout.Y_AXIS);
+		mainPanel.setLayout(verticalMenu);
+
 		this.clientState = new JLabel();
 		mainPanel.add(clientState);
+
+		this.userNameLabel = new JLabel("Username");
+		mainPanel.add(userNameLabel);
+
+		this.userName = new JTextField();
+		mainPanel.add(userName);
+		userName.setVisible(false);
+
+		this.passwordLabel = new JLabel("Password");
+		mainPanel.add(passwordLabel);
+
+		this.password = new JTextField();
+		mainPanel.add(password);
+		password.setVisible(false);
 		/*JButton btnConect = new JButton("conetcion");
 		mainLayout.add(btnConect);
 		btnConect.addActionListener(new ActionListener(){
@@ -61,9 +81,13 @@ public class ClientGUI extends JFrame {
 		try {
 			if(mainClient.initializeClient()){
 				clientState.setText("Conectado");
+				userName.setVisible(true);
+				password.setVisible(true);
 			}
 			else{
 				clientState.setText("Error de conexion");
+				userName.setVisible(true);
+				password.setVisible(true);
 			}
 		} 
 		catch (Exception e) {
