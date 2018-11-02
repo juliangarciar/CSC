@@ -87,7 +87,7 @@ public class ClientController extends Thread{
 		 try {
 			 // TODO Clean method
 			 out.writeObject(keyPair.getPublic());
-			 //System.out.println("Emitida clave pública...");
+			 //System.out.println("Emitida clave pï¿½blica...");
 			 
 			 SealedObject i = (SealedObject) in.readObject();
 			 //System.out.println("Recibida clave secreta...");
@@ -106,10 +106,11 @@ public class ClientController extends Thread{
 			 SealedObject socketEncrypted = new SealedObject("010", c);
 			 //System.out.println(socketEncrypted);
 			 
-			 System.out.println(kClient + ": Conexión segura!");
+			 System.out.println(kClient + ": Conexiï¿½n segura!");
 			 
 			 out.writeObject(socketEncrypted);
-			 secureConnection=true;
+			 // Care with this
+			 secureConnection = true;
 		 }
 		 catch(Exception e) {
 			 System.out.println(e);
@@ -166,9 +167,9 @@ public class ClientController extends Thread{
 		 }
 	 }
 	 public void signIn() throws Exception{
-		 if(userID!=Integer.MAX_VALUE) {
-			 secureSend("E100");
-			 return;
+		 if(userID != Integer.MAX_VALUE) {
+			secureSend("E100");
+			return;
 		 }
 		 secureSend("111");
 		 
@@ -435,26 +436,29 @@ public class ClientController extends Thread{
 	 }
 	 
 	public void secureSend(Object o) throws Exception{
-		 if(secureConnection) {
-			 Cipher c = Cipher.getInstance("AES");
-			 c.init(Cipher.ENCRYPT_MODE, connectionKey);
-			 SealedObject socketEncrypted = new SealedObject((Serializable) o, c);
-			 out.writeObject(socketEncrypted);
-		 }
-		 else {
-			 out.writeObject(o);
-		 }
+		if(secureConnection) {
+			Cipher c = Cipher.getInstance("AES");
+			c.init(Cipher.ENCRYPT_MODE, connectionKey);
+			SealedObject socketEncrypted = new SealedObject((Serializable) o, c);
+			out.writeObject(socketEncrypted);
+		}
+		else {
+			out.writeObject(o);
+		}
     }
 	
 	public Object secureReceive() throws Exception {
-		 if(secureConnection) {
-			 SealedObject socket = (SealedObject) in.readObject();
-			 Cipher c = Cipher.getInstance("AES");
-			 c.init(Cipher.DECRYPT_MODE, connectionKey);
-			 return socket.getObject(c);
-		 }else {
-			 return in.readObject();
-		 }
+		if(secureConnection) {
+			Object o = in.readObject();
+			System.out.println(o);
+			SealedObject socket = (SealedObject) o;
+			Cipher c = Cipher.getInstance("AES");
+			c.init(Cipher.DECRYPT_MODE, connectionKey);
+			return socket.getObject(c);
+		}
+		else {
+			return in.readObject();
+		}
 	}
 	
 	public KeyPair buildKeyPair(){
