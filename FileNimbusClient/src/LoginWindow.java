@@ -2,8 +2,10 @@ import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Event;
 import javax.swing.Box;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
@@ -22,6 +24,7 @@ import javax.swing.border.BevelBorder;
 import java.awt.CardLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import javax.swing.JList;
 
 public class LoginWindow {
 
@@ -75,12 +78,27 @@ public class LoginWindow {
 		frmFilenimbus.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmFilenimbus.getContentPane().setLayout(new CardLayout(0, 0));
 		
+		frmFilenimbus.addWindowListener(new java.awt.event.WindowAdapter() {
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent e) {
+				JOptionPane.showMessageDialog(null, "We will miss you.");
+				try{
+					mainClient.logout();
+					mainClient.close();
+				}
+				catch(Exception i){
+					System.out.println("Something went wrong while closing the program.");
+				}
+			}
+		});
+		
+		
 		JPanel loginPanel = new JPanel();
 		FlowLayout fl_loginPanel = (FlowLayout) loginPanel.getLayout();
 		fl_loginPanel.setVgap(50);
 		fl_loginPanel.setHgap(50);
 		loginPanel.setBackground(new Color(30, 144, 255));
-		frmFilenimbus.getContentPane().add(loginPanel, "name_340962002284630");
+		frmFilenimbus.getContentPane().add(loginPanel, "name_409793438578449");
 		
 		Box loginBox = Box.createVerticalBox();
 		loginBox.setFont(new Font("Arial", Font.PLAIN, 15));
@@ -148,7 +166,11 @@ public class LoginWindow {
 		btnLogin.setAlignmentX(0.5f);
 		
 		JPanel signUpPanel = new JPanel();
-		frmFilenimbus.getContentPane().add(signUpPanel, "name_340988584442828");
+		FlowLayout flowLayout = (FlowLayout) signUpPanel.getLayout();
+		flowLayout.setVgap(50);
+		flowLayout.setHgap(50);
+		signUpPanel.setBackground(new Color(30, 144, 255));
+		frmFilenimbus.getContentPane().add(signUpPanel, "name_409793459187686");
 		
 		Box verticalBox = Box.createVerticalBox();
 		verticalBox.setFont(new Font("Arial", Font.PLAIN, 15));
@@ -156,7 +178,7 @@ public class LoginWindow {
 		verticalBox.setBorder(null);
 		signUpPanel.add(verticalBox);
 		
-		JLabel label = new JLabel("Welcome");
+		JLabel label = new JLabel("Register new account");
 		label.setFont(new Font("Arial", Font.BOLD, 16));
 		label.setAlignmentX(0.5f);
 		verticalBox.add(label);
@@ -216,7 +238,7 @@ public class LoginWindow {
 		Component horizontalStrut_1 = Box.createHorizontalStrut(20);
 		horizontalBox_1.add(horizontalStrut_1);
 		
-		JButton btnRegisterConfirm = new JButton("Register");
+		JButton btnRegisterConfirm = new JButton("Confirm");
 		btnRegisterConfirm.setMinimumSize(new Dimension(100, 25));
 		btnRegisterConfirm.setMaximumSize(new Dimension(100, 25));
 		btnRegisterConfirm.setForeground(Color.BLACK);
@@ -225,6 +247,10 @@ public class LoginWindow {
 		btnRegisterConfirm.setBackground(SystemColor.menu);
 		btnRegisterConfirm.setAlignmentX(0.5f);
 		horizontalBox_1.add(btnRegisterConfirm);
+		
+		JPanel userPanel = new JPanel();
+		userPanel.setBackground(new Color(30, 144, 255));
+		frmFilenimbus.getContentPane().add(userPanel, "name_409807723464641");
 		
 		// Button actions
 		btnRegister.addActionListener(new ActionListener() {
@@ -245,6 +271,8 @@ public class LoginWindow {
 				try{
 					if(mainClient.login(userName, tmp)){
 						statLabel.setText("Conectado.");
+						userPanel.setVisible(true);
+						frmFilenimbus.setContentPane(userPanel);
 					}
 				}
 				catch(Exception e){
