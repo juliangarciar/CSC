@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Event;
 import javax.swing.Box;
+import javax.swing.DefaultListModel;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
 import javax.swing.UIManager;
@@ -25,8 +26,15 @@ import java.awt.CardLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JList;
+import javax.swing.JInternalFrame;
+import javax.swing.JFileChooser;
+import javax.swing.JSplitPane;
 
 public class LoginWindow {
+	private java.io.File chosenFile;
+	private JPanel loginPanel;	
+	private JPanel signUpPanel;
+	private JPanel userPanel;
 
 	private JFrame frmFilenimbus;
 	private JTextField userField;
@@ -76,7 +84,6 @@ public class LoginWindow {
 		frmFilenimbus.setTitle("FileNimbus");
 		frmFilenimbus.setBounds(100, 100, 450, 300);
 		frmFilenimbus.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frmFilenimbus.getContentPane().setLayout(new CardLayout(0, 0));
 		
 		frmFilenimbus.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
@@ -91,14 +98,15 @@ public class LoginWindow {
 				}
 			}
 		});
+		frmFilenimbus.getContentPane().setLayout(new CardLayout(0, 0));
 		
 		
-		JPanel loginPanel = new JPanel();
+		loginPanel = new JPanel();
 		FlowLayout fl_loginPanel = (FlowLayout) loginPanel.getLayout();
 		fl_loginPanel.setVgap(50);
 		fl_loginPanel.setHgap(50);
 		loginPanel.setBackground(new Color(30, 144, 255));
-		frmFilenimbus.getContentPane().add(loginPanel, "name_409793438578449");
+		frmFilenimbus.getContentPane().add(loginPanel, "name_418755019206011");
 		
 		Box loginBox = Box.createVerticalBox();
 		loginBox.setFont(new Font("Arial", Font.PLAIN, 15));
@@ -165,12 +173,12 @@ public class LoginWindow {
 		btnLogin.setBackground(UIManager.getColor("Button.background"));
 		btnLogin.setAlignmentX(0.5f);
 		
-		JPanel signUpPanel = new JPanel();
+		signUpPanel = new JPanel();
 		FlowLayout flowLayout = (FlowLayout) signUpPanel.getLayout();
 		flowLayout.setVgap(50);
 		flowLayout.setHgap(50);
 		signUpPanel.setBackground(new Color(30, 144, 255));
-		frmFilenimbus.getContentPane().add(signUpPanel, "name_409793459187686");
+		frmFilenimbus.getContentPane().add(signUpPanel, "name_418755085745115");
 		
 		Box verticalBox = Box.createVerticalBox();
 		verticalBox.setFont(new Font("Arial", Font.PLAIN, 15));
@@ -248,17 +256,115 @@ public class LoginWindow {
 		btnRegisterConfirm.setAlignmentX(0.5f);
 		horizontalBox_1.add(btnRegisterConfirm);
 		
-		JPanel userPanel = new JPanel();
+		userPanel = new JPanel();
+		FlowLayout flowLayout_2 = (FlowLayout) userPanel.getLayout();
+		flowLayout_2.setVgap(50);
+		flowLayout_2.setHgap(50);
 		userPanel.setBackground(new Color(30, 144, 255));
-		frmFilenimbus.getContentPane().add(userPanel, "name_409807723464641");
+		frmFilenimbus.getContentPane().add(userPanel, "name_418755151851020");
 		
-		// Button actions
+		Box verticalBox_1 = Box.createVerticalBox();
+		verticalBox_1.setBorder(UIManager.getBorder("ComboBox.border"));
+		userPanel.add(verticalBox_1);
+		verticalBox_1.setAlignmentY(0.0f);
+		
+		JLabel fileName = new JLabel("No file");
+		verticalBox_1.add(fileName);
+		
+		JButton btnSelectFile = new JButton("Select file");
+		verticalBox_1.add(btnSelectFile);
+		
+		JButton btnUploadFile = new JButton("Upload file");
+		verticalBox_1.add(btnUploadFile);
+		
+		JLabel downloadFileName = new JLabel("No file");
+		verticalBox_1.add(downloadFileName);
+		
+		JButton btnDownloadFile = new JButton("Download");
+		verticalBox_1.add(btnDownloadFile);
+		
+		JButton btnUpdateFiles = new JButton("Update");
+		verticalBox_1.add(btnUpdateFiles);
+		
+		JButton btnLogout = new JButton("Logout");
+		verticalBox_1.add(btnLogout);
+		
+		JList fileList = new JList();
+		fileList.setBounds(300, 0, 200, 200);
+		userPanel.add(fileList);
+		
+		// File upload button
+		btnUploadFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(chosenFile.exists()){
+					try{
+						mainClient.upload(chosenFile);
+					}
+					catch(Exception u){
+						System.out.println("File could not be uploaded.");
+					}
+				}
+				else{
+					System.out.println("File not selected.");
+				}
+			}
+		});
+		
+		// File select button
+		btnSelectFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser fileChooser = new JFileChooser();
+				if(fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
+					// Get the file
+					chosenFile = fileChooser.getSelectedFile();
+					fileName.setText(chosenFile.getAbsolutePath());
+				}
+			}
+		});
+		
+		// Update files button
+		btnUpdateFiles.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				DefaultListModel model = new DefaultListModel<>();
+				model.addElement("Dummy1");
+				model.addElement("Dummy1");
+				model.addElement("Dummy1");
+				fileList.setModel(model);
+			}
+		});
+		
+		// Download selected file
+		btnDownloadFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				downloadFileName.setText(fileList.getSelectedValue().toString());
+			}
+		});
+		
+		// Logout button
+		btnLogout.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try{
+					mainClient.logout();
+				}
+				catch(Exception o){
+					// TODO Implement logout exception catch
+				}
+				loginPanel.setVisible(true);
+				userPanel.setVisible(false);
+				//frmFilenimbus.setContentPane(signUpPanel);
+			}
+		});
+
+		// Register button
 		btnRegister.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				signUpPanel.setVisible(true);
-				frmFilenimbus.setContentPane(signUpPanel);
+				loginPanel.setVisible(false);
+				//frmFilenimbus.setContentPane(signUpPanel);
 			}
 		});
+
+		// Login button
 		btnLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String userName = userField.getText();
@@ -271,8 +377,9 @@ public class LoginWindow {
 				try{
 					if(mainClient.login(userName, tmp)){
 						statLabel.setText("Conectado.");
+						loginPanel.setVisible(false);
 						userPanel.setVisible(true);
-						frmFilenimbus.setContentPane(userPanel);
+						//frmFilenimbus.setContentPane(userPanel);
 					}
 				}
 				catch(Exception e){
@@ -283,13 +390,17 @@ public class LoginWindow {
 				}
 			}
 		});
+
+		// Back to login button
 		backToLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				signUpPanel.setVisible(false);
 				loginPanel.setVisible(true);
-				frmFilenimbus.setContentPane(loginPanel);
+				//frmFilenimbus.setContentPane(loginPanel);
 			}
 		});
 		
+		// Confirm new signup button
 		btnRegisterConfirm.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String userName = userRegister.getText();
@@ -320,7 +431,7 @@ public class LoginWindow {
 				}
 			}
 		});
-
+		
 		// Checks the server connection
 		// TODO Bucle?
 		try{

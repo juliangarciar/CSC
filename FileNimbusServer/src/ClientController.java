@@ -220,7 +220,7 @@ public class ClientController extends Thread{
 		 byte[] key = (byte[]) secureReceive();
 		 
 		 // Upload file
-		 String sentence = "INSERT INTO file(data, name) " + "VALUES(?, '" + filename + "')";
+		 String sentence = "INSERT INTO file(user, data, name) " + "VALUES(?, '" + filename + "')";
 		 PreparedStatement ps = sqlConnection.prepareStatement(sentence, PreparedStatement.RETURN_GENERATED_KEYS);
 		 
 		 ps.setBytes(1, file);
@@ -230,7 +230,7 @@ public class ClientController extends Thread{
 		 ResultSet rs = ps.getGeneratedKeys();    		 
 		 if(rs.first()){
 	         int fileID = rs.getInt(1);
-	         sentence = "INSERT INTO fileuser(user, file, secretKey, shared) " + "VALUES('"+userID+"', "+ fileID +", ?, '"+ userID + "')";
+	         sentence = "INSERT INTO fileuser(user, file, secretKey, shared) " + "VALUES('"+ userID +"', "+ fileID +", ?, '"+ userID + "')";
 			 ps = sqlConnection.prepareStatement(sentence);
 	 		 ps.setBytes(1, key);
 	 		 ps.executeUpdate();

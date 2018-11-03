@@ -306,19 +306,17 @@ public class Client{
     }
 
     // TODO Checking this method
-    public void upload() throws Exception {
+    public void upload(File file) throws Exception {
     	if(username == null) {
     		println("No estas logueado");
     		return;
     	}
     	print("Fichero a subir: ");
-    	File file = new File(System.console().readLine());
     	if(!file.exists()) {
     		println("Fichero no encontrado");
     		return;
     	}
         byte[] fileContent = Files.readAllBytes(file.toPath());
-         
         //Genera AES
         KeyGenerator kgen = KeyGenerator.getInstance("AES");
         kgen.init(128); //TODO Tama�o de clave secreta
@@ -340,13 +338,13 @@ public class Client{
         if(r.getClass().equals(String.class)) {
         	if(((String)r).equals("E301")) {
         		println("Error de sincronizacion");//Logueado en cliente y no en servidor
-        	}else {
-        		
-        		secureSend(file.toPath().getFileName().toString());//Enviar el nombre
-        		secureSend(fctypyed);//Enviar el file es demasiado grande y habra que fraccionarlo
-        		secureSend(kcrypted);//Enviar la clave    		
+			}
+			else {
+        		secureSend(file.toPath().getFileName().toString()); // Enviar el nombre
+        		secureSend(fctypyed); // Enviar el file es demasiado grande y habra que fraccionarlo
+        		secureSend(kcrypted); // Enviar la clave    		
       
-        		//A la espera de confirmacion
+        		// A la espera de confirmacion
         		r = secureReceive();
         		if(r.getClass().equals(String.class)) {
         			if(((String)r).equals("303")){
