@@ -87,24 +87,16 @@ public class ClientController extends Thread{
 		 try {
 			 // TODO Clean method
 			 out.writeObject(keyPair.getPublic());
-			 //System.out.println("Emitida clave pública...");
 			 
 			 SealedObject i = (SealedObject) in.readObject();
-			 //System.out.println("Recibida clave secreta...");
 			 
-			 //System.out.println("Desencriptando clave secreta...");
 			 Cipher c = Cipher.getInstance("RSA");
 			 c.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
 			 connectionKey = (Key) i.getObject(c);
 			 
-			 //System.out.println("Clave secreta obtenida con exito!");
-			 //System.out.println(connectionKey);
-			 
-			 //System.out.println("Encriptando socket..");
 			 c = Cipher.getInstance("AES");
 			 c.init(Cipher.ENCRYPT_MODE, connectionKey);
 			 SealedObject socketEncrypted = new SealedObject("010", c);
-			 //System.out.println(socketEncrypted);
 			 
 			 System.out.println(kClient + ": Conexión segura!");
 			 
