@@ -417,8 +417,9 @@ public class LoginWindow {
 					try{
 						if(mainClient.signUp(userName, tmp1)){
 							statLabel.setText("Account created succesfully.");
+							signUpPanel.setVisible(false);
 							loginPanel.setVisible(true);
-							frmFilenimbus.setContentPane(loginPanel);
+							//frmFilenimbus.setContentPane(loginPanel);
 						}
 					}
 					catch(Exception a){
