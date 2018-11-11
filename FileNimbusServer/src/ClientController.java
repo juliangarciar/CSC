@@ -220,7 +220,7 @@ public class ClientController extends Thread{
 		 byte[] key = (byte[]) secureReceive();
 		 
 		 // Upload file
-		 String sentence = "INSERT INTO file(user, data, name) " + "VALUES(?, '" + filename + "')";
+		 String sentence = "INSERT INTO file(data, name) " + "VALUES(?, '" + filename + "')";
 		 PreparedStatement ps = sqlConnection.prepareStatement(sentence, PreparedStatement.RETURN_GENERATED_KEYS);
 		 
 		 ps.setBytes(1, file);
