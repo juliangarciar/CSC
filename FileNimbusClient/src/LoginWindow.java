@@ -25,6 +25,15 @@ import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.LineBorder;
+import javax.swing.JScrollPane;
+import javax.swing.JMenu;
+import javax.swing.ImageIcon;
+import javax.swing.JMenuItem;
+import javax.swing.JMenuBar;
 
 public class LoginWindow {
 	private java.io.File chosenFile;
@@ -38,11 +47,15 @@ public class LoginWindow {
 	private JTextField userRegister;
 	private JPasswordField passRegister1;
 	private JPasswordField passRegister2;
+	private JTable table;
+	private DefaultTableModel model;
 
 	private final int portNum = 8080;
 	private final String ip = "localhost";
 	private final Client mainClient = new Client(portNum, ip);
-
+	
+	private final String NO_FILE_SELECTED = "No file selected";
+	
 	/**
 	 * Launch the application.
 	 */
@@ -256,77 +269,184 @@ public class LoginWindow {
 		userPanel.setBackground(new Color(30, 144, 255));
 		frmFilenimbus.getContentPane().add(userPanel, "name_418755151851020");
 		
-		JPanel panel = new JPanel();
-		
-		JList fileList = new JList();
-		fileList.setBounds(300, 0, 200, 200);
+		JPanel panelMyFiles = new JPanel();
+		panelMyFiles.setBackground(SystemColor.inactiveCaptionBorder);
 		
 		JLabel downloadFileName = new JLabel("No file");
 		
 		JButton btnDownloadFile = new JButton("Download");
+		btnDownloadFile.setForeground(Color.WHITE);
+		btnDownloadFile.setBackground(new Color(100, 149, 237));
 		
 		// Download selected file
 		btnDownloadFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				downloadFileName.setText(fileList.getSelectedValue().toString());
+				//downloadFileName.setText(fileList.getSelectedValue().toString());
 			}
 		});
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		// Boton update declarado
 		
 		JButton btnUpdateFiles = new JButton("Update");
+		btnUpdateFiles.setForeground(Color.WHITE);
+		btnUpdateFiles.setBackground(new Color(100, 149, 237));
 		
-		// Update files button
-		btnUpdateFiles.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				
-				try {
-					DefaultListModel model = new DefaultListModel<>();
-					mainClient.check(model);
-					fileList.setModel(model);
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
-		});
-		GroupLayout gl_panel = new GroupLayout(panel);
-		gl_panel.setHorizontalGroup(
-			gl_panel.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_panel.createSequentialGroup()
-					.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
-						.addGroup(Alignment.TRAILING, gl_panel.createSequentialGroup()
-							.addContainerGap()
-							.addComponent(downloadFileName)
-							.addPreferredGap(ComponentPlacement.RELATED, 353, Short.MAX_VALUE)
+		
+		
+		JLabel lblMyFiles = new JLabel("My Files");
+		lblMyFiles.setFont(new Font("Tahoma", Font.BOLD, 14));
+		
+		JScrollPane scrollPane = new JScrollPane();
+		GroupLayout gl_panelMyFiles = new GroupLayout(panelMyFiles);
+		gl_panelMyFiles.setHorizontalGroup(
+			gl_panelMyFiles.createParallelGroup(Alignment.TRAILING)
+				.addGroup(Alignment.LEADING, gl_panelMyFiles.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_panelMyFiles.createSequentialGroup()
+							.addGap(10)
+							.addComponent(downloadFileName))
+						.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 547, Short.MAX_VALUE)
+						.addGroup(gl_panelMyFiles.createSequentialGroup()
+							.addComponent(lblMyFiles)
+							.addPreferredGap(ComponentPlacement.RELATED, 330, Short.MAX_VALUE)
 							.addComponent(btnDownloadFile)
 							.addGap(18)
-							.addComponent(btnUpdateFiles))
-						.addGroup(gl_panel.createSequentialGroup()
-							.addGap(10)
-							.addComponent(fileList, GroupLayout.DEFAULT_SIZE, 547, Short.MAX_VALUE)))
+							.addComponent(btnUpdateFiles)))
 					.addContainerGap())
 		);
-		gl_panel.setVerticalGroup(
-			gl_panel.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_panel.createSequentialGroup()
+		gl_panelMyFiles.setVerticalGroup(
+			gl_panelMyFiles.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panelMyFiles.createSequentialGroup()
 					.addContainerGap()
-					.addGroup(gl_panel.createParallelGroup(Alignment.TRAILING)
-						.addGroup(gl_panel.createParallelGroup(Alignment.BASELINE)
-							.addComponent(btnUpdateFiles)
-							.addComponent(btnDownloadFile))
-						.addComponent(downloadFileName))
-					.addPreferredGap(ComponentPlacement.UNRELATED)
-					.addComponent(fileList, GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
+					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.BASELINE)
+						.addComponent(btnUpdateFiles)
+						.addComponent(btnDownloadFile)
+						.addComponent(lblMyFiles))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(downloadFileName)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 138, Short.MAX_VALUE)
 					.addContainerGap())
 		);
-		panel.setLayout(gl_panel);
+		panelMyFiles.setLayout(gl_panelMyFiles);
 		
-		JPanel panel_2 = new JPanel();
 		
-		JButton btnLogout = new JButton("Logout");
+		// ********************************************* Tabla ***********************************************************
+		table=new JTable();
+		scrollPane.setViewportView(table);
 		
-		// Logout button
-		btnLogout.addActionListener(new ActionListener() {
+		// Rellenamos la tabla con los datos de los archivos
+    	model = new DefaultTableModel()
+		{
+    		Class[] columnTypes = new Class[] {
+				Boolean.class, String.class, String.class, String.class, String.class
+			};
+    		
+    		public Class getColumnClass(int columnIndex) {
+				return columnTypes[columnIndex];
+			}
+		};
+		model.addColumn("Select");
+	    model.addColumn("Id");
+	    model.addColumn("Name");
+	    model.addColumn("Type");
+	    model.addColumn("Propietary");
+		table.setModel(model);
+		asignarTamanyoColumnasTabla();
+		
+	    
+	 // Update files button
+ 		btnUpdateFiles.addActionListener(new ActionListener() {
+ 			public void actionPerformed(ActionEvent e) {
+ 				
+ 				// Rellenamos la tabla con los datos de los archivos
+ 			    try {
+ 					table.setModel(mainClient.check(model));
+ 					asignarTamanyoColumnasTabla();
+ 					
+ 				} catch (Exception e1) {
+ 					// TODO Auto-generated catch block
+ 					e1.printStackTrace();
+ 				}
+ 			}
+ 		});
+ 	// ********************************************* Fin Tabla ***********************************************************
+	    
+	    
+	    
+		JPanel panelUploadFiles = new JPanel();
+		panelUploadFiles.setBackground(SystemColor.inactiveCaptionBorder);
+		
+		JPanel panelUsuario = new JPanel();
+		panelUsuario.setBackground(new Color(30, 144, 255));
+		
+		JPanel panelMenu = new JPanel();
+		panelMenu.setBackground(new Color(30, 144, 255));
+		
+		GroupLayout gl_userPanel = new GroupLayout(userPanel);
+		gl_userPanel.setHorizontalGroup(
+			gl_userPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_userPanel.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_userPanel.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_userPanel.createSequentialGroup()
+							.addComponent(panelUploadFiles, GroupLayout.DEFAULT_SIZE, 570, Short.MAX_VALUE)
+							.addGap(7))
+						.addGroup(gl_userPanel.createSequentialGroup()
+							.addComponent(panelMyFiles, GroupLayout.PREFERRED_SIZE, 567, GroupLayout.PREFERRED_SIZE)
+							.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+						.addGroup(Alignment.TRAILING, gl_userPanel.createSequentialGroup()
+							.addComponent(panelUsuario, GroupLayout.PREFERRED_SIZE, 166, GroupLayout.PREFERRED_SIZE)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(panelMenu, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addContainerGap())))
+		);
+		gl_userPanel.setVerticalGroup(
+			gl_userPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_userPanel.createSequentialGroup()
+					.addGap(5)
+					.addGroup(gl_userPanel.createParallelGroup(Alignment.LEADING)
+						.addComponent(panelUsuario, GroupLayout.PREFERRED_SIZE, 51, GroupLayout.PREFERRED_SIZE)
+						.addComponent(panelMenu, GroupLayout.PREFERRED_SIZE, 47, GroupLayout.PREFERRED_SIZE))
+					.addGap(20)
+					.addComponent(panelUploadFiles, GroupLayout.PREFERRED_SIZE, 59, GroupLayout.PREFERRED_SIZE)
+					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addComponent(panelMyFiles, GroupLayout.PREFERRED_SIZE, 209, GroupLayout.PREFERRED_SIZE)
+					.addContainerGap(13, Short.MAX_VALUE))
+		);
+		
+		JMenuBar menuBar = new JMenuBar();
+		menuBar.setBorderPainted(false);
+		menuBar.setBackground(new Color(30, 144, 255));
+		panelMenu.add(menuBar);
+		
+		JMenu menu = new JMenu("");
+		menu.setBackground(new Color(30, 144, 255));
+		menuBar.add(menu);
+		menu.setIcon(new ImageIcon(LoginWindow.class.getResource("/assets/menuIconMini.png")));
+		
+		JMenuItem mntmSettings = new JMenuItem("Settings");
+		mntmSettings.setBackground(new Color(135, 206, 235));
+		menu.add(mntmSettings);
+		
+		JMenuItem mntmLogout = new JMenuItem("Logout");
+		mntmLogout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				
 				try{
 					mainClient.logout();
 				}
@@ -335,65 +455,87 @@ public class LoginWindow {
 				}
 				loginPanel.setVisible(true);
 				userPanel.setVisible(false);
-				//frmFilenimbus.setContentPane(signUpPanel);
 			}
 		});
-		GroupLayout gl_userPanel = new GroupLayout(userPanel);
-		gl_userPanel.setHorizontalGroup(
-			gl_userPanel.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_userPanel.createSequentialGroup()
-					.addContainerGap()
-					.addGroup(gl_userPanel.createParallelGroup(Alignment.LEADING)
-						.addComponent(panel, GroupLayout.PREFERRED_SIZE, 567, GroupLayout.PREFERRED_SIZE)
-						.addComponent(panel_2, GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
-						.addComponent(btnLogout, Alignment.TRAILING))
-					.addContainerGap())
-		);
-		gl_userPanel.setVerticalGroup(
-			gl_userPanel.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_userPanel.createSequentialGroup()
-					.addGap(7)
-					.addComponent(btnLogout)
-					.addPreferredGap(ComponentPlacement.RELATED)
-					.addComponent(panel_2, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE)
-					.addPreferredGap(ComponentPlacement.RELATED)
-					.addComponent(panel, GroupLayout.PREFERRED_SIZE, 214, GroupLayout.PREFERRED_SIZE)
-					.addContainerGap(12, Short.MAX_VALUE))
-		);
+		mntmLogout.setBackground(new Color(135, 206, 235));
+		menu.add(mntmLogout);
 		
-		JLabel fileName = new JLabel("No file");
+		JLabel lblUser = new JLabel("User");
+		lblUser.setFont(new Font("Tahoma", Font.BOLD, 11));
+		
+		JPanel ImgPanel = new JPanel();
+		ImgPanel.setBackground(new Color(30, 144, 255));
+		GroupLayout gl_panelUsuario = new GroupLayout(panelUsuario);
+		gl_panelUsuario.setHorizontalGroup(
+			gl_panelUsuario.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panelUsuario.createSequentialGroup()
+					.addGap(8)
+					.addComponent(ImgPanel, GroupLayout.PREFERRED_SIZE, 41, GroupLayout.PREFERRED_SIZE)
+					.addGap(18)
+					.addComponent(lblUser)
+					.addContainerGap(74, Short.MAX_VALUE))
+		);
+		gl_panelUsuario.setVerticalGroup(
+			gl_panelUsuario.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panelUsuario.createSequentialGroup()
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+					.addComponent(ImgPanel, GroupLayout.PREFERRED_SIZE, 41, GroupLayout.PREFERRED_SIZE)
+					.addContainerGap())
+				.addGroup(gl_panelUsuario.createSequentialGroup()
+					.addGap(24)
+					.addComponent(lblUser)
+					.addContainerGap(13, Short.MAX_VALUE))
+		);
+		ImgPanel.setLayout(null);
+		
+		Imagen img = new Imagen();
+		img.setLocation(0, 0);
+		img.setSize(40, 40);
+		ImgPanel.add(img);
+		panelUsuario.setLayout(gl_panelUsuario);
+		
+		JLabel fileName = new JLabel(NO_FILE_SELECTED);
 		
 		JButton btnSelectFile = new JButton("Select file");
+		btnSelectFile.setForeground(Color.WHITE);
+		btnSelectFile.setBackground(new Color(100, 149, 237));
 		
 		JButton btnUploadFile = new JButton("Upload file");
-		GroupLayout gl_panel_2 = new GroupLayout(panel_2);
-		gl_panel_2.setHorizontalGroup(
-			gl_panel_2.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_panel_2.createSequentialGroup()
-					.addGroup(gl_panel_2.createParallelGroup(Alignment.LEADING)
-						.addGroup(gl_panel_2.createSequentialGroup()
-							.addGap(212)
-							.addComponent(btnSelectFile)
-							.addGap(5)
-							.addComponent(btnUploadFile))
-						.addGroup(gl_panel_2.createSequentialGroup()
+		btnUploadFile.setForeground(Color.WHITE);
+		btnUploadFile.setBackground(new Color(100, 149, 237));
+		
+		JLabel lblNewFile = new JLabel("New File");
+		lblNewFile.setFont(new Font("Tahoma", Font.BOLD, 14));
+		GroupLayout gl_panelUploadFiles = new GroupLayout(panelUploadFiles);
+		gl_panelUploadFiles.setHorizontalGroup(
+			gl_panelUploadFiles.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panelUploadFiles.createSequentialGroup()
+					.addGroup(gl_panelUploadFiles.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_panelUploadFiles.createSequentialGroup()
 							.addContainerGap()
-							.addComponent(fileName)))
-					.addContainerGap(188, Short.MAX_VALUE))
-		);
-		gl_panel_2.setVerticalGroup(
-			gl_panel_2.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_panel_2.createSequentialGroup()
-					.addGap(5)
-					.addGroup(gl_panel_2.createParallelGroup(Alignment.LEADING)
-						.addGroup(gl_panel_2.createSequentialGroup()
+							.addComponent(lblNewFile)
+							.addGap(77)
 							.addComponent(btnSelectFile)
-							.addPreferredGap(ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
-							.addComponent(fileName)
-							.addContainerGap())
-						.addComponent(btnUploadFile)))
+							.addGap(18)
+							.addComponent(btnUploadFile))
+						.addGroup(gl_panelUploadFiles.createSequentialGroup()
+							.addGap(22)
+							.addComponent(fileName)))
+					.addContainerGap(264, Short.MAX_VALUE))
 		);
-		panel_2.setLayout(gl_panel_2);
+		gl_panelUploadFiles.setVerticalGroup(
+			gl_panelUploadFiles.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panelUploadFiles.createSequentialGroup()
+					.addGap(5)
+					.addGroup(gl_panelUploadFiles.createParallelGroup(Alignment.BASELINE)
+						.addComponent(lblNewFile)
+						.addComponent(btnSelectFile)
+						.addComponent(btnUploadFile))
+					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addComponent(fileName)
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+		);
+		panelUploadFiles.setLayout(gl_panelUploadFiles);
 		
 		// File upload button
 		btnUploadFile.addActionListener(new ActionListener() {
@@ -401,6 +543,10 @@ public class LoginWindow {
 				if(chosenFile.exists()){
 					try{
 						mainClient.upload(chosenFile);
+						fileName.setText(NO_FILE_SELECTED);
+						
+						// Actualizamos la tabla de archivos
+						mainClient.check(model);
 					}
 					catch(Exception u){
 						System.out.println("File could not be uploaded.");
@@ -450,6 +596,10 @@ public class LoginWindow {
 						loginPanel.setVisible(false);
 						userPanel.setVisible(true);
 						//frmFilenimbus.setContentPane(userPanel);
+						
+						// Cargar los archivos del usuario en la tabla
+						table.setModel(mainClient.check(model));
+						lblUser.setText(userName);
 					}
 				}
 				catch(Exception e){
@@ -514,5 +664,21 @@ public class LoginWindow {
 			btnLogin.setEnabled(false);
 			btnRegister.setEnabled(false);
 		}
+	}
+
+	private void asignarTamanyoColumnasTabla() {
+		
+		table.getColumnModel().getColumn(0).setPreferredWidth(45);
+		table.getColumnModel().getColumn(0).setMinWidth(45);
+		table.getColumnModel().getColumn(0).setMaxWidth(45);
+		table.getColumnModel().getColumn(1).setPreferredWidth(35);
+		table.getColumnModel().getColumn(1).setMinWidth(35);
+		table.getColumnModel().getColumn(1).setMaxWidth(35);
+		table.getColumnModel().getColumn(3).setPreferredWidth(70);
+		table.getColumnModel().getColumn(3).setMinWidth(70);
+		table.getColumnModel().getColumn(3).setMaxWidth(70);
+		table.getColumnModel().getColumn(4).setPreferredWidth(100);
+		table.getColumnModel().getColumn(4).setMinWidth(100);
+		table.getColumnModel().getColumn(4).setMaxWidth(100);
 	}
 }

@@ -24,7 +24,7 @@ public class Imagen extends javax.swing.JPanel {
     }
     
     public Imagen(String imagen) { 
-        this.setSize(50, 50); // tamaño del panel por defecto
+        this.setSize(40, 40); // tamaño del panel por defecto
         dir = imagen;
     } 
     

@@ -25,6 +25,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.DefaultListModel;
+import javax.swing.table.DefaultTableModel;
 
 public class Client{
     private boolean printDebug = true; // Activate print debug
@@ -156,7 +157,7 @@ public class Client{
         }
         return loginResponse;
     }
-
+    
     // Logout the client
     public void logout() throws Exception {
     	if(username == null) {
@@ -258,19 +259,36 @@ public class Client{
         return signinResponse;
     }
 
+    public String CortarNombre(Object nombre) {
+    	String cadena = nombre.toString();
+    	return cadena.substring(0, cadena.lastIndexOf("."));
+    }
+    
+    public String CortarTipo(Object nombre) {
+    	String cadena = nombre.toString();
+    	return cadena.substring(cadena.lastIndexOf(".")+1, cadena.length()).toUpperCase();
+    }
+    
     // Check user files in the server
-    // TODO Checking this method
-    public void check(DefaultListModel model) throws Exception {
+    public DefaultTableModel check(DefaultTableModel model) throws Exception {
+    	    	
     	if(username==null) {
     		println("You are not loggued in");
-    		return;
+    		return model;
     	}
     	
     	secureSend("200");
     	Object r = secureReceive();
     	if(r.getClass().equals(String.class) && ((String)r).equals("E201")) {
     		println("Synchronization error");
-    		return;
+    		return model;
+    	}
+    	
+    	// Borramos los datos anteriores si hay
+    	if (model.getRowCount() > 0) {
+    		for (int fila=model.getRowCount()-1; fila>=0; fila--) {
+    			model.removeRow(fila);
+    		}
     	}
     	
     	//Leemos tres arrays de misma longitud
@@ -280,13 +298,12 @@ public class Client{
     	
     	
     	//Esto es solo mostrar con formato por consola
-    	println("  | Id  | Compartido x | Nombre de Archivo |");
-    	println("  |_____|______________|___________________|");
+    	//println("  | Id  | Compartido x | Nombre de Archivo |");
+    	//println("  |_____|______________|___________________|");
     	if(id.length==shared.length && id.length==name.length) {
     		for(int i=0; i<id.length; i++) {
-    			print("  | ");
+    			/*print("  | ");
     			print(id[i]);
-    			
     			int a = (int)(Math.log10((int)id[i]) +1);
     			a=3-a; a = Math.max(a, 0); a= Math.min(a, 3);
     			for(int j = 0 ; j<=a; j++) {print(" ");}
@@ -294,22 +311,31 @@ public class Client{
     			
     			print(shared[i]);
     			
+    			
     			a=((String)shared[i]).length();
     			a=12-a; a = Math.max(a, 0); a= Math.min(a, 13);
     			for(int j = 0 ; j<=a; j++) {print(" ");}
     			print("| ");
     			
     			print(name[i]);
-    			model.addElement(name[i]);
     			
     			a=((String)name[i]).length();
     			a=17-a; a = Math.max(a, 0); a= Math.min(a, 18);
     			for(int j = 0 ; j<=a; j++) {print(" ");}
     			print("|");
     			
-    			println("");
+    			println("");*/
+    			
+    			model.addRow(new Object[i]);
+    			model.setValueAt(false,i,0);
+    	        model.setValueAt(id[i], i, 1);
+    	        model.setValueAt(CortarNombre(name[i]), i, 2);
+    	        model.setValueAt(CortarTipo(name[i]), i, 3);
+    	        model.setValueAt(shared[i], i, 4);
     		}
     	}
+    	
+    	return model;
     }
 
     // TODO Checking this method
