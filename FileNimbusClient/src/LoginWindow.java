@@ -1,34 +1,30 @@
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JOptionPane;
-import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Event;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.SystemColor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import javax.swing.Box;
 import javax.swing.DefaultListModel;
-import javax.swing.JTextField;
-import javax.swing.JLabel;
-import javax.swing.UIManager;
-import java.awt.Window.Type;
-import java.awt.SystemColor;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
-import java.awt.FlowLayout;
-import javax.swing.SwingConstants;
-import javax.swing.JLayeredPane;
-import java.awt.Component;
-import java.awt.Font;
-import javax.swing.JPasswordField;
-import java.awt.Dimension;
-import javax.swing.border.BevelBorder;
-import java.awt.CardLayout;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import javax.swing.JList;
-import javax.swing.JInternalFrame;
 import javax.swing.JFileChooser;
-import javax.swing.JSplitPane;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 
 public class LoginWindow {
 	private java.io.File chosenFile;
@@ -257,41 +253,143 @@ public class LoginWindow {
 		horizontalBox_1.add(btnRegisterConfirm);
 		
 		userPanel = new JPanel();
-		FlowLayout flowLayout_2 = (FlowLayout) userPanel.getLayout();
-		flowLayout_2.setVgap(50);
-		flowLayout_2.setHgap(50);
 		userPanel.setBackground(new Color(30, 144, 255));
 		frmFilenimbus.getContentPane().add(userPanel, "name_418755151851020");
 		
-		Box verticalBox_1 = Box.createVerticalBox();
-		verticalBox_1.setBorder(UIManager.getBorder("ComboBox.border"));
-		userPanel.add(verticalBox_1);
-		verticalBox_1.setAlignmentY(0.0f);
-		
-		JLabel fileName = new JLabel("No file");
-		verticalBox_1.add(fileName);
-		
-		JButton btnSelectFile = new JButton("Select file");
-		verticalBox_1.add(btnSelectFile);
-		
-		JButton btnUploadFile = new JButton("Upload file");
-		verticalBox_1.add(btnUploadFile);
-		
-		JLabel downloadFileName = new JLabel("No file");
-		verticalBox_1.add(downloadFileName);
-		
-		JButton btnDownloadFile = new JButton("Download");
-		verticalBox_1.add(btnDownloadFile);
-		
-		JButton btnUpdateFiles = new JButton("Update");
-		verticalBox_1.add(btnUpdateFiles);
-		
-		JButton btnLogout = new JButton("Logout");
-		verticalBox_1.add(btnLogout);
+		JPanel panel = new JPanel();
 		
 		JList fileList = new JList();
 		fileList.setBounds(300, 0, 200, 200);
-		userPanel.add(fileList);
+		
+		JLabel downloadFileName = new JLabel("No file");
+		
+		JButton btnDownloadFile = new JButton("Download");
+		
+		// Download selected file
+		btnDownloadFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				downloadFileName.setText(fileList.getSelectedValue().toString());
+			}
+		});
+		
+		JButton btnUpdateFiles = new JButton("Update");
+		
+		// Update files button
+		btnUpdateFiles.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				DefaultListModel model = new DefaultListModel<>();
+				model.addElement("Dummy1");
+				model.addElement("Dummy2");
+				model.addElement("Dummy3");
+				fileList.setModel(model);
+			}
+		});
+		GroupLayout gl_panel = new GroupLayout(panel);
+		gl_panel.setHorizontalGroup(
+			gl_panel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panel.createSequentialGroup()
+					.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
+						.addGroup(Alignment.TRAILING, gl_panel.createSequentialGroup()
+							.addContainerGap()
+							.addComponent(downloadFileName)
+							.addPreferredGap(ComponentPlacement.RELATED, 353, Short.MAX_VALUE)
+							.addComponent(btnDownloadFile)
+							.addGap(18)
+							.addComponent(btnUpdateFiles))
+						.addGroup(gl_panel.createSequentialGroup()
+							.addGap(10)
+							.addComponent(fileList, GroupLayout.DEFAULT_SIZE, 547, Short.MAX_VALUE)))
+					.addContainerGap())
+		);
+		gl_panel.setVerticalGroup(
+			gl_panel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panel.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_panel.createParallelGroup(Alignment.TRAILING)
+						.addGroup(gl_panel.createParallelGroup(Alignment.BASELINE)
+							.addComponent(btnUpdateFiles)
+							.addComponent(btnDownloadFile))
+						.addComponent(downloadFileName))
+					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addComponent(fileList, GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
+					.addContainerGap())
+		);
+		panel.setLayout(gl_panel);
+		
+		JPanel panel_2 = new JPanel();
+		
+		JButton btnLogout = new JButton("Logout");
+		
+		// Logout button
+		btnLogout.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try{
+					mainClient.logout();
+				}
+				catch(Exception o){
+					// TODO Implement logout exception catch
+				}
+				loginPanel.setVisible(true);
+				userPanel.setVisible(false);
+				//frmFilenimbus.setContentPane(signUpPanel);
+			}
+		});
+		GroupLayout gl_userPanel = new GroupLayout(userPanel);
+		gl_userPanel.setHorizontalGroup(
+			gl_userPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_userPanel.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_userPanel.createParallelGroup(Alignment.LEADING)
+						.addComponent(panel, GroupLayout.PREFERRED_SIZE, 567, GroupLayout.PREFERRED_SIZE)
+						.addComponent(panel_2, GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
+						.addComponent(btnLogout, Alignment.TRAILING))
+					.addContainerGap())
+		);
+		gl_userPanel.setVerticalGroup(
+			gl_userPanel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_userPanel.createSequentialGroup()
+					.addGap(7)
+					.addComponent(btnLogout)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(panel_2, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE)
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(panel, GroupLayout.PREFERRED_SIZE, 214, GroupLayout.PREFERRED_SIZE)
+					.addContainerGap(12, Short.MAX_VALUE))
+		);
+		
+		JLabel fileName = new JLabel("No file");
+		
+		JButton btnSelectFile = new JButton("Select file");
+		
+		JButton btnUploadFile = new JButton("Upload file");
+		GroupLayout gl_panel_2 = new GroupLayout(panel_2);
+		gl_panel_2.setHorizontalGroup(
+			gl_panel_2.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panel_2.createSequentialGroup()
+					.addGroup(gl_panel_2.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_panel_2.createSequentialGroup()
+							.addGap(212)
+							.addComponent(btnSelectFile)
+							.addGap(5)
+							.addComponent(btnUploadFile))
+						.addGroup(gl_panel_2.createSequentialGroup()
+							.addContainerGap()
+							.addComponent(fileName)))
+					.addContainerGap(188, Short.MAX_VALUE))
+		);
+		gl_panel_2.setVerticalGroup(
+			gl_panel_2.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panel_2.createSequentialGroup()
+					.addGap(5)
+					.addGroup(gl_panel_2.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_panel_2.createSequentialGroup()
+							.addComponent(btnSelectFile)
+							.addPreferredGap(ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
+							.addComponent(fileName)
+							.addContainerGap())
+						.addComponent(btnUploadFile)))
+		);
+		panel_2.setLayout(gl_panel_2);
 		
 		// File upload button
 		btnUploadFile.addActionListener(new ActionListener() {
@@ -321,39 +419,7 @@ public class LoginWindow {
 				}
 			}
 		});
-		
-		// Update files button
-		btnUpdateFiles.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				DefaultListModel model = new DefaultListModel<>();
-				model.addElement("Dummy1");
-				model.addElement("Dummy1");
-				model.addElement("Dummy1");
-				fileList.setModel(model);
-			}
-		});
-		
-		// Download selected file
-		btnDownloadFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				downloadFileName.setText(fileList.getSelectedValue().toString());
-			}
-		});
-		
-		// Logout button
-		btnLogout.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				try{
-					mainClient.logout();
-				}
-				catch(Exception o){
-					// TODO Implement logout exception catch
-				}
-				loginPanel.setVisible(true);
-				userPanel.setVisible(false);
-				//frmFilenimbus.setContentPane(signUpPanel);
-			}
-		});
+		userPanel.setLayout(gl_userPanel);
 
 		// Register button
 		btnRegister.addActionListener(new ActionListener() {
