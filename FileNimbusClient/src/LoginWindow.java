@@ -538,9 +538,9 @@ public class LoginWindow {
 		);
 		ImgPanel.setLayout(null);
 		
-		Imagen img = new Imagen();
-		img.setBounds(0, 0, 40, 40);
-		ImgPanel.add(img);
+		//Imagen img = new Imagen();
+		//img.setBounds(0, 0, 40, 40);
+		//ImgPanel.add(img);
 		panelUsuario.setLayout(gl_panelUsuario);
 		
 		JLabel fileName = new JLabel(NO_FILE_SELECTED);
