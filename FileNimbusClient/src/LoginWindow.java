@@ -277,11 +277,15 @@ public class LoginWindow {
 		// Update files button
 		btnUpdateFiles.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				DefaultListModel model = new DefaultListModel<>();
-				model.addElement("Dummy1");
-				model.addElement("Dummy2");
-				model.addElement("Dummy3");
-				fileList.setModel(model);
+				
+				try {
+					DefaultListModel model = new DefaultListModel<>();
+					mainClient.check(model);
+					fileList.setModel(model);
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 		GroupLayout gl_panel = new GroupLayout(panel);

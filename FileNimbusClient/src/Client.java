@@ -24,6 +24,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.swing.DefaultListModel;
 
 public class Client{
     private boolean printDebug = true; // Activate print debug
@@ -259,7 +260,7 @@ public class Client{
 
     // Check user files in the server
     // TODO Checking this method
-    public void check() throws Exception {
+    public void check(DefaultListModel model) throws Exception {
     	if(username==null) {
     		println("You are not loggued in");
     		return;
@@ -299,6 +300,7 @@ public class Client{
     			print("| ");
     			
     			print(name[i]);
+    			model.addElement(name[i]);
     			
     			a=((String)name[i]).length();
     			a=17-a; a = Math.max(a, 0); a= Math.min(a, 18);
