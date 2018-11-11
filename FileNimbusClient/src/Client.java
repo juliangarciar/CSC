@@ -16,6 +16,7 @@ import java.security.PublicKey;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -393,8 +394,10 @@ public class Client{
         else{println("Unknown error");}       
     }
 
-    /*public static void download() throws Exception {
-    	if(username==null) {
+    public void download(ArrayList<String> idFicheros) throws Exception {
+    	
+    	
+    	/*if(username==null) {
     		println("No estas logueado");
     		return;
     	}    	
@@ -490,8 +493,8 @@ public class Client{
     	
     	}catch(SecurityException e) {//Puede que nos denieguen el acceso
     		println("No tienes permisos para acceder a esa carpeta");
-    	}
-    }*/
+    	}*/
+    }
 
     /*public static void delete() throws Exception {
     	//TODO ------------------------- delete
