@@ -50,7 +50,7 @@ public class Client{
             in = new ObjectInputStream(socket.getInputStream());
         }
         catch(ConnectException e){
-            println("Servidor desconectado, intentalo mas tarde.");
+            println("Server disconnected, try it later.");
             return false;
         }
 
@@ -61,7 +61,7 @@ public class Client{
 
     // Connects to the server socket
     public void connectTo() throws Exception {
-    	println("Generando conexion segura...");
+    	println("Generating secure connection ...");
         secureSend("000");
     	Key K = (Key) secureReceive();
     	KeyGenerator kgen = KeyGenerator.getInstance("AES");
@@ -77,7 +77,7 @@ public class Client{
         isSecure = true;
         Object codeRv = secureReceive();
     	if(codeRv.equals("010")) {
-            println("Conexi�n AES Segura!");
+            println("Secure AES connection!");
             isSecure = true;
         }
         else {
@@ -91,7 +91,7 @@ public class Client{
     	secureSend("100");
     	Object r = secureReceive();
     	if(r.getClass().equals(String.class) && r.equals("E100")) {
-            println("Ya has hecho login");
+            println("You have already login");
         }
         else if(r.getClass().equals(String.class) && r.equals("101")) {
         	// Get the data
@@ -109,14 +109,14 @@ public class Client{
     		r = secureReceive();
     		if(r.getClass().equals(String.class)) {
     			if(r.equals("E102")) {
-    				println("Usuario incorrecto");
+    				println("Incorrect user");
     				username = null;
     				pwd = null;
                 }
                 else {
     				r = secureReceive();
     				if(r.getClass().equals(String.class) && r.equals("E103")) {
-    					println("Contraseï¿½a incorrecta");
+    					println("Incorrect password");
     					username = null;
                         pwd = null;
                     }
@@ -142,7 +142,7 @@ public class Client{
     					
     					userKP = new KeyPair(publicKey, privateKey);
     					
-                        println("Bienvenido " + username);
+                        println("Welcome " + username);
                         loginResponse = true;
     				}	
     			}
@@ -154,20 +154,20 @@ public class Client{
     // Logout the client
     public void logout() throws Exception {
     	if(username == null) {
-    		println("No estas logueado");
+    		println("You are not logged in");
         }
         else{
     		secureSend("120");
     		Object r = secureReceive();
     		if(r.getClass().equals(String.class)) {
     			if(((String) r).equals("121")) {
-    				println("Logout realizado con ï¿½xito");
+    				println("Logout successfull!");
     				username = null;
     				pwd = null;
     				userKP = null;
                 }
                 else {
-    				println("No estabas logueado en el servidor");
+    				println("You are not loggued into the server");
     				username = null;
     				pwd = null;
     				userKP = null;
@@ -182,13 +182,13 @@ public class Client{
 			socket.close();
 			in.close();
 			out.close();
-			println("Conexion cerrada con �xito");
+			println("Connection closed successfully");
         }
         else {
 			socket.close();
 			in.close();
 			out.close();
-			println("Error de cierre, cerrando igualemente");
+			println("Closing error, closed also");
 		}
     }
 
@@ -199,7 +199,7 @@ public class Client{
         Object r = secureReceive();
         println("Debug-1");
     	if(r.getClass().equals(String.class) && r.equals("E100")) {
-    		println("Ya has hecho login");
+    		println("You have already login");
     	}
     	else{
             username = user;
@@ -216,7 +216,7 @@ public class Client{
 
             r = secureReceive();
             if(r.getClass().equals(String.class) && r.equals("E111")) {
-                println("Nombre de usuario ya registrado");
+                println("User name already registered");
             }
             else{
                 println("Debug1");
@@ -244,7 +244,7 @@ public class Client{
                 secureSend(encrypted);
                 
                 if(secureReceive().equals("113")) {
-                    println("Usuario creado: " + username);
+                    println("Created user: " + username);
                     signinResponse = true;
                 }
             }
@@ -256,14 +256,14 @@ public class Client{
     // TODO Checking this method
     public void check() throws Exception {
     	if(username==null) {
-    		println("No estas logueado");
+    		println("You are not loggued in");
     		return;
     	}
     	
     	secureSend("200");
     	Object r = secureReceive();
     	if(r.getClass().equals(String.class) && ((String)r).equals("E201")) {
-    		println("Error de sincronizaci�n");
+    		println("Synchronization error");
     		return;
     	}
     	
@@ -308,12 +308,12 @@ public class Client{
     // TODO Checking this method
     public void upload(File file) throws Exception {
     	if(username == null) {
-    		println("No estas logueado");
+    		println("You are not logged in");
     		return;
     	}
     	print("Fichero a subir: ");
     	if(!file.exists()) {
-    		println("Fichero no encontrado");
+    		println("File not found");
     		return;
     	}
         byte[] fileContent = Files.readAllBytes(file.toPath());
@@ -337,7 +337,7 @@ public class Client{
         Object r = secureReceive();
         if(r.getClass().equals(String.class)) {
         	if(((String)r).equals("E301")) {
-        		println("Error de sincronizacion");//Logueado en cliente y no en servidor
+        		println("Synchronization error");//Logueado en cliente y no en servidor
 			}
 			else {
         		secureSend(file.toPath().getFileName().toString()); // Enviar el nombre
@@ -348,16 +348,16 @@ public class Client{
         		r = secureReceive();
         		if(r.getClass().equals(String.class)) {
         			if(((String)r).equals("303")){
-        				println("Fichero subido con �xito");
+        				println("File uploaded successfully");
                     }
                     else if(((String)r).equals("E302")){
-        				println("Error subiendo el fichero");
+        				println("Error uploading the file");
         			}
                 }
-                else{println("Error desconocido");}
+                else{println("Unknown error");}
         	}
         }
-        else{println("Error desconocido");}       
+        else{println("Unknown error");}       
     }
 
     /*public static void download() throws Exception {
@@ -556,7 +556,7 @@ public class Client{
     		return Integer.parseInt(r);
         }
         catch(NumberFormatException e) {
-    		println("Introduce un n�mero");
+    		println("Enter a number");
     		return 0;
     	}
     }
