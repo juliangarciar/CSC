@@ -54,7 +54,7 @@ public class ClientController extends Thread{
 	        	}else if(i.equals("600")){
 	        		share();
 	        	}else if(i.equals("710")){
-	        		changePasecureSendword();
+	        		changePassword();
 	        	}else if(i.equals("720")){
 	        		changeUser();
 	        	}else if(i.equals("800")){
@@ -380,7 +380,7 @@ public class ClientController extends Thread{
 		 }
 		 secureSend("502");
 	 }
-	 public void changePasecureSendword() throws Exception{
+	 public void changePassword() throws Exception{
 		 if(userID==Integer.MAX_VALUE) {
 			 secureSend("E711");
 		 }
