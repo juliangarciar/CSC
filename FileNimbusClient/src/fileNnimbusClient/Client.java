@@ -1,3 +1,4 @@
+package fileNnimbusClient;
 import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -25,7 +26,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.swing.DefaultListModel;
 import javax.swing.table.DefaultTableModel;
 
 public class Client{
