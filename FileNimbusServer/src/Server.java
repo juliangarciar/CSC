@@ -9,6 +9,9 @@ public class Server{
 	private String sqlIp;
 	private String sqlPort;
 	private String sqlDb;
+	private String sqlUser;
+	private String sqlPass;
+
 	private Statement sqlSentence;
 	private Connection sqlConnection;
 	
@@ -18,13 +21,15 @@ public class Server{
 	
 	private int client;
 	
-	public Server(int server_port, String server_ip, String sql_ip, String sql_port, String sql_db) {
+	public Server(int server_port, String server_ip, String sql_ip, String sql_port, String sql_db, String sql_user, String sql_pass) {
 		this.port = server_port;
 		this.ip = server_ip;
 		
 		this.sqlIp = sql_ip;
 		this.sqlPort = sql_port;
 		this.sqlDb = sql_db;
+		this.sqlUser = sql_user;
+		this.sqlPass = sql_pass;
 		this.sqlSentence = null;
 		this.sqlConnection = null;
 		
@@ -38,11 +43,11 @@ public class Server{
 	public void initServer() throws Exception {
 		try {
 			String temp = "jdbc:mysql://" + sqlIp + ":" + sqlPort + "/" + sqlDb;
-    	    sqlConnection = DriverManager.getConnection(temp, "root", "");
+    	    sqlConnection = DriverManager.getConnection(temp, sqlUser, sqlPass);
     	    sqlSentence = sqlConnection.createStatement();
 		}
 		catch(SQLException e) {
-    		System.out.println("Error conexion SQL.");
+    		System.out.println("Error conexion SQL."+e);
     		return;
     	}
 		

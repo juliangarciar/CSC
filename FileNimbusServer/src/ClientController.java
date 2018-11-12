@@ -98,7 +98,7 @@ public class ClientController extends Thread{
 			 c.init(Cipher.ENCRYPT_MODE, connectionKey);
 			 SealedObject socketEncrypted = new SealedObject("010", c);
 			 
-			 System.out.println(kClient + ": Conexión segura!");
+			 System.out.println(kClient + ": Conexion segura!");
 			 
 			 out.writeObject(socketEncrypted);
 			 secureConnection=true;
