@@ -78,7 +78,7 @@ public class ClientController extends Thread{
             clientSocket.close();
 		}
 		catch(Exception e) {
-			 e.printStackTrace();
+			 System.out.println(e.getMessage());;
 		}
 	}
 	   
@@ -87,7 +87,7 @@ public class ClientController extends Thread{
 		 try {
 			 // TODO Clean method
 			 out.writeObject(keyPair.getPublic());
-			 //System.out.println("Emitida clave p�blica...");
+			 //System.out.println("Emitida clave publica...");
 			 
 			 SealedObject i = (SealedObject) in.readObject();
 			 //System.out.println("Recibida clave secreta...");
@@ -106,7 +106,7 @@ public class ClientController extends Thread{
 			 SealedObject socketEncrypted = new SealedObject("010", c);
 			 //System.out.println(socketEncrypted);
 			 
-			 System.out.println(kClient + ": Conexi�n segura!");
+			 System.out.println(kClient + ": Conexion segura!");
 			 
 			 out.writeObject(socketEncrypted);
 			 // Care with this
@@ -328,7 +328,7 @@ public class ClientController extends Thread{
 			 secureSend(rs.getString("name"));
 			 
 			 String name =rs.getString("name");
-			 System.out.println(kClient + ": DesecureConnectionargado fichero: " + name + " id: " + fileID);
+			 System.out.println(kClient + ": Descargado fichero: " + name + " id: " + fileID);
 		 }
 	 }
 	 public void check() throws Exception{
