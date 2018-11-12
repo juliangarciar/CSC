@@ -57,24 +57,7 @@ public class LoginWindow {
 	
 	private final String NO_FILE_SELECTED = "No file selected";
 	
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					LoginWindow window = new LoginWindow();
-					window.frmFilenimbus.setVisible(true);
-				} 
-				catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-
+	
 	/**
 	 * Create the application.
 	 */
@@ -538,9 +521,9 @@ public class LoginWindow {
 		);
 		ImgPanel.setLayout(null);
 		
-		//Imagen img = new Imagen();
-		//img.setBounds(0, 0, 40, 40);
-		//ImgPanel.add(img);
+		Imagen img = new Imagen();
+		img.setBounds(0, 0, 40, 40);
+		ImgPanel.add(img);
 		panelUsuario.setLayout(gl_panelUsuario);
 		
 		JLabel fileName = new JLabel(NO_FILE_SELECTED);
@@ -729,5 +712,10 @@ public class LoginWindow {
 		table.getColumnModel().getColumn(4).setPreferredWidth(100);
 		table.getColumnModel().getColumn(4).setMinWidth(100);
 		table.getColumnModel().getColumn(4).setMaxWidth(100);
+	}
+	
+	// Get de frmFilenimbus que se llama desde main
+	public JFrame getFrmFilenimbus() {
+		return frmFilenimbus;
 	}
 }
