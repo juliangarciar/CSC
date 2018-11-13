@@ -77,7 +77,7 @@ public class LoginWindow {
 		frmFilenimbus.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent e) {
-				JOptionPane.showMessageDialog(null, "We will miss you.");
+				JOptionPane.showMessageDialog(null, "We will miss you.", "FileNimbus", JOptionPane.INFORMATION_MESSAGE);
 				try{
 					mainClient.logout();
 					mainClient.close();
@@ -280,14 +280,11 @@ public class LoginWindow {
 		        }
 				
 				if (total > 0) {
-					try {
-						mainClient.download(idFicheros);
-					} catch (Exception ex) {
-						// TODO Auto-generated catch block
-						ex.printStackTrace();
-					}
+					//TODO Recorrer la lista y llamar uno a uno a download
+					//mainClient.download(idFicheros);
+					
 				} else {
-					JOptionPane.showMessageDialog(null, "Nothing is selected!");
+					JOptionPane.showMessageDialog(null, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
 				}
 			
 			}
@@ -343,31 +340,7 @@ public class LoginWindow {
 		);
 		panelMyFiles.setLayout(gl_panelMyFiles);
 		
-		btnSelectAll.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				
-				for(int fila=0; fila<table.getRowCount(); fila++) {
-					
-					// Si no está seleccionado, se marca
-					if(!Boolean.valueOf(table.getValueAt(fila, 0).toString())) {
-		        		table.setValueAt(true, fila, 0);
-		        	}
-		        }
-			}
-		});
 		
-		btnDeselectAll.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				
-				for(int fila=0; fila<table.getRowCount(); fila++) {
-					
-					// Si está seleccionado, se desmarca
-					if(Boolean.valueOf(table.getValueAt(fila, 0).toString())) {
-		        		table.setValueAt(false, fila, 0);
-		        	}
-		        }
-			}
-		});
 		
 		// ********************************************* Tabla ***********************************************************
 		table=new JTable();
@@ -393,23 +366,31 @@ public class LoginWindow {
 		asignarTamanyoColumnasTabla();
 		
 	    
-	 // Update files button
+		// Update files button
  		btnUpdateFiles.addActionListener(new ActionListener() {
  			public void actionPerformed(ActionEvent e) {
  				
  				// Rellenamos la tabla con los datos de los archivos
- 			    try {
- 					table.setModel(mainClient.check(model));
- 					asignarTamanyoColumnasTabla();
- 					
- 				} catch (Exception e1) {
- 					// TODO Auto-generated catch block
- 					e1.printStackTrace();
- 				}
+ 				cargarDatosTabla();
  			}
  		});
+ 		
+ 		// Seleccionar todas las filas de la tabla
+ 		btnSelectAll.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				marcarDesmarcarFilas(true);
+			}
+		});
+		
+ 		// Deseleccionar todas las filas de la tabla
+		btnDeselectAll.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				marcarDesmarcarFilas(false);
+			}
+		});
  	// ********************************************* Fin Tabla ***********************************************************
-	    
 	    
 	    
 		JPanel panelUploadFiles = new JPanel();
@@ -574,7 +555,7 @@ public class LoginWindow {
 						fileName.setText(NO_FILE_SELECTED);
 						
 						// Actualizamos la tabla de archivos
-						mainClient.check(model);
+						cargarDatosTabla();
 					}
 					catch(Exception u){
 						System.out.println("File could not be uploaded.");
@@ -626,12 +607,15 @@ public class LoginWindow {
 						//frmFilenimbus.setContentPane(userPanel);
 						
 						// Cargar los archivos del usuario en la tabla
-						table.setModel(mainClient.check(model));
+						cargarDatosTabla();
 						lblUser.setText(userName);
 					}
 				}
-				catch(Exception e){
-					statLabel.setText(e.getMessage());
+				catch(Excepciones ex) {
+					MensajeError(ex.exErrorPersonalizado());
+				}
+				catch(Exception ex) {
+					statLabel.setText(ex.getMessage());
 				}
 				finally{
 					//statLabel.setText(tmp);
@@ -694,6 +678,33 @@ public class LoginWindow {
 		}
 	}
 
+	private void cargarDatosTabla() {
+		ArrayList<Archivo> lista;
+		try {
+			lista = mainClient.check();
+			if(lista!=null) {
+				
+				// Borramos los datos anteriores si hay
+		    	if (model.getRowCount() > 0) {
+		    		for (int fila=model.getRowCount()-1; fila>=0; fila--) {
+		    			model.removeRow(fila);
+		    		}
+		    	}
+		    	
+				for(int num=0; num<lista.size(); num++) {
+					model.addRow(new Object[num]);
+					model.setValueAt(false,num,0);
+			        model.setValueAt(lista.get(num).getId(), num, 1);
+			        model.setValueAt(lista.get(num).getNombre(), num, 2);
+			        model.setValueAt(lista.get(num).getTipo(), num, 3);
+			        model.setValueAt(lista.get(num).getShared(), num, 4);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Error in file list: "+e.getMessage());
+		}
+	}
+	
 	private void asignarTamanyoColumnasTabla() {
 		
 		table.getColumnModel().getColumn(0).setPreferredWidth(45);
@@ -710,8 +721,23 @@ public class LoginWindow {
 		table.getColumnModel().getColumn(4).setMaxWidth(100);
 	}
 	
+	// Para marcar o desmarcar todas las filas de la tabla
+	public void marcarDesmarcarFilas(boolean valor) {
+    	
+    	for(int fila=0; fila<table.getRowCount(); fila++) {
+			if(Boolean.valueOf(table.getValueAt(fila, 0).toString()) == !valor) {
+        		table.setValueAt(valor, fila, 0);
+        	}
+        }
+    }
+	
 	// Get de frmFilenimbus que se llama desde main
 	public JFrame getFrmFilenimbus() {
 		return frmFilenimbus;
+	}
+	
+	// Para tener una alerta de errores general con el mismo formato
+    private void MensajeError(String mensaje) {
+    	JOptionPane.showMessageDialog(null, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
 	}
 }

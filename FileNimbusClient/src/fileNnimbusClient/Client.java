@@ -26,7 +26,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.swing.table.DefaultTableModel;
 
 public class Client{
     private boolean printDebug = true; // Activate print debug
@@ -117,16 +116,20 @@ public class Client{
     		r = secureReceive();
     		if(r.getClass().equals(String.class)) {
     			if(r.equals("E102")) {
-    				println("Incorrect user");
+    				
     				username = null;
     				pwd = null;
+    				// Pasamos la excepcion a la interfaz
+    				throw new Excepciones("Incorrect user");
                 }
                 else {
     				r = secureReceive();
     				if(r.getClass().equals(String.class) && r.equals("E103")) {
-    					println("Incorrect password");
+    					
     					username = null;
                         pwd = null;
+                     // Pasamos la excepcion a la interfaz
+    					throw new Excepciones("Incorrect password");
                     }
                     else {
     					byte[]  pub = (byte[])secureReceive();
@@ -158,8 +161,8 @@ public class Client{
         }
         return loginResponse;
     }
-    
-    // Logout the client
+
+	// Logout the client
     public void logout() throws Exception {
     	if(username == null) {
     		println("You are not logged in");
@@ -260,36 +263,23 @@ public class Client{
         return signinResponse;
     }
 
-    public String CortarNombre(Object nombre) {
-    	String cadena = nombre.toString();
-    	return cadena.substring(0, cadena.lastIndexOf("."));
-    }
-    
-    public String CortarTipo(Object nombre) {
-    	String cadena = nombre.toString();
-    	return cadena.substring(cadena.lastIndexOf(".")+1, cadena.length()).toUpperCase();
-    }
     
     // Check user files in the server
-    public DefaultTableModel check(DefaultTableModel model) throws Exception {
-    	    	
+    public ArrayList<Archivo> check() throws Exception {
+    	
+    	// Creamos la lista que contendrá todos los archivos del usuario
+    	ArrayList<Archivo> lista = new ArrayList<Archivo>();
+    	
     	if(username==null) {
     		println("You are not loggued in");
-    		return model;
+    		return lista;
     	}
     	
     	secureSend("200");
     	Object r = secureReceive();
     	if(r.getClass().equals(String.class) && ((String)r).equals("E201")) {
     		println("Synchronization error");
-    		return model;
-    	}
-    	
-    	// Borramos los datos anteriores si hay
-    	if (model.getRowCount() > 0) {
-    		for (int fila=model.getRowCount()-1; fila>=0; fila--) {
-    			model.removeRow(fila);
-    		}
+    		return lista;
     	}
     	
     	//Leemos tres arrays de misma longitud
@@ -297,13 +287,23 @@ public class Client{
     	Object[] shared = (Object[]) secureReceive();
     	Object[] name = (Object[]) secureReceive();
     	
+    	if(id.length==shared.length && id.length==name.length) {
+    		for(int num=0; num<id.length; num++) {
+    			
+    			// Creamos el objeto Archivo y lo agregamos a la lista
+    			Archivo archivo = new Archivo(id[num].toString(), shared[num].toString(),
+    					name[num].toString());
+    			lista.add(archivo);
+    		}
+    	}
+    	return lista;
     	
     	//Esto es solo mostrar con formato por consola
     	//println("  | Id  | Compartido x | Nombre de Archivo |");
     	//println("  |_____|______________|___________________|");
-    	if(id.length==shared.length && id.length==name.length) {
+    	/*if(id.length==shared.length && id.length==name.length) {
     		for(int i=0; i<id.length; i++) {
-    			/*print("  | ");
+    			print("  | ");
     			print(id[i]);
     			int a = (int)(Math.log10((int)id[i]) +1);
     			a=3-a; a = Math.max(a, 0); a= Math.min(a, 3);
@@ -311,7 +311,6 @@ public class Client{
     			print("| ");
     			
     			print(shared[i]);
-    			
     			
     			a=((String)shared[i]).length();
     			a=12-a; a = Math.max(a, 0); a= Math.min(a, 13);
@@ -325,18 +324,9 @@ public class Client{
     			for(int j = 0 ; j<=a; j++) {print(" ");}
     			print("|");
     			
-    			println("");*/
-    			
-    			model.addRow(new Object[i]);
-    			model.setValueAt(false,i,0);
-    	        model.setValueAt(id[i], i, 1);
-    	        model.setValueAt(CortarNombre(name[i]), i, 2);
-    	        model.setValueAt(CortarTipo(name[i]), i, 3);
-    	        model.setValueAt(shared[i], i, 4);
+    			println("");
     		}
-    	}
-    	
-    	return model;
+    	}*/
     }
 
     // TODO Checking this method
@@ -394,7 +384,7 @@ public class Client{
         else{println("Unknown error");}       
     }
 
-    public void download(ArrayList<String> idFicheros) throws Exception {
+    public void download(String idArchivo) throws Exception {
     	
     	
     	/*if(username==null) {
