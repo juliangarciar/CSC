@@ -1,6 +1,6 @@
 import java.awt.EventQueue;
 
-public class fileNimbusClient {
+public class Main {
 	/**
 	 * Launch the application.
 	 */
