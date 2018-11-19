@@ -1,2 +1,0 @@
-Dar permisos a run.sh:
-chmod a+rx run.sh
