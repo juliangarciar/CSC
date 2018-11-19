@@ -1,5 +1,3 @@
-package fileNnimbusClient;
-
 public class Excepciones extends Exception {
 	String mensaje;
 	

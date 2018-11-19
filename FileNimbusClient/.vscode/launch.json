@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - fileNimbusClient",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "mainClass": "fileNimbusClient",
+            "args": "",
+            "projectName": "FileNimbusClient"
+        },
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - fileNimbusClient",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "mainClass": "fileNnimbusClient.fileNimbusClient",
+            "args": "",
+            "projectName": "FileNimbusClient"
+        }
+    ]
+}

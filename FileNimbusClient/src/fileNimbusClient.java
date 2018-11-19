@@ -1,4 +1,3 @@
-package fileNnimbusClient;
 import java.awt.EventQueue;
 
 public class fileNimbusClient {

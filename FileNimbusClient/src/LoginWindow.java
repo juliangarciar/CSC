@@ -1,4 +1,3 @@
-package fileNnimbusClient;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -272,7 +271,7 @@ public class LoginWindow {
 				// Pillar todas las filas seleccionadas
 				for(int fila=0; fila<table.getRowCount(); fila++) {
 					
-					// Si está seleccionado, lo guardamos en el array
+					// Si estï¿½ seleccionado, lo guardamos en el array
 					if(Boolean.valueOf(table.getValueAt(fila, 0).toString())) {
 		        		total++;
 		        		idFicheros.add(table.getValueAt(fila, 1).toString());
@@ -438,7 +437,7 @@ public class LoginWindow {
 		JMenu menu = new JMenu("");
 		menu.setBackground(new Color(30, 144, 255));
 		menuBar.add(menu);
-		menu.setIcon(new ImageIcon(LoginWindow.class.getResource("/assets/menuIconMini.png")));
+		//menu.setIcon(new ImageIcon(LoginWindow.class.getResource("./assets/menuIconMini.png")));
 		
 		JMenuItem mntmSettings = new JMenuItem("Settings");
 		mntmSettings.setHorizontalAlignment(SwingConstants.LEFT);

@@ -1,7 +1,4 @@
-package fileNnimbusClient;
-
 public class Archivo {
-	
 	String id;
 	String shared;
 	String name;

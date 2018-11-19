@@ -1,5 +1,3 @@
-package fileNnimbusClient;
-
 import java.awt.Dimension;
 import java.awt.Graphics;
 
@@ -15,22 +13,22 @@ public class Imagen extends javax.swing.JPanel {
     String url = "../assets/";
     
     public Imagen() { 
-        this.setSize(50, 50); // tamaño del panel por defecto
+        this.setSize(50, 50); // tamaï¿½o del panel por defecto
         dir = "user-default.png";
     }
     
     public Imagen(int x, int y) { 
-        this.setSize(x, y); // asignar nuevo tamaño del panel 
+        this.setSize(x, y); // asignar nuevo tamaï¿½o del panel 
         dir = "user-default.png";
     }
     
     public Imagen(String imagen) { 
-        this.setSize(40, 40); // tamaño del panel por defecto
+        this.setSize(40, 40); // tamaï¿½o del panel por defecto
         dir = imagen;
     } 
     
     public Imagen(int x, int y, String imagen) { 
-        this.setSize(x, y); // asignar nuevo tamaño del panel 
+        this.setSize(x, y); // asignar nuevo tamaï¿½o del panel 
         dir = imagen;
     }
     

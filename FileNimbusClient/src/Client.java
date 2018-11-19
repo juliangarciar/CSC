@@ -1,4 +1,3 @@
-package fileNnimbusClient;
 import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -267,7 +266,7 @@ public class Client{
     // Check user files in the server
     public ArrayList<Archivo> check() throws Exception {
     	
-    	// Creamos la lista que contendrá todos los archivos del usuario
+    	// Creamos la lista que contendrï¿½ todos los archivos del usuario
     	ArrayList<Archivo> lista = new ArrayList<Archivo>();
     	
     	if(username==null) {
