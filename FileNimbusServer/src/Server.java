@@ -1,16 +1,12 @@
-import java.io.*;
-import java.net.*;
-import java.sql.*;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class Server{
 	private int port;
 	private String ip;
-	
-	private String sqlIp;
-	private String sqlPort;
-	private String sqlDb;
-	private Statement sqlSentence;
-	private Connection sqlConnection;
 	
 	private ServerSocket listener;
 	private ObjectOutputStream out;
@@ -18,15 +14,9 @@ public class Server{
 	
 	private int client;
 	
-	public Server(int server_port, String server_ip, String sql_ip, String sql_port, String sql_db) {
+	public Server(int server_port, String server_ip) {
 		this.port = server_port;
 		this.ip = server_ip;
-		
-		this.sqlIp = sql_ip;
-		this.sqlPort = sql_port;
-		this.sqlDb = sql_db;
-		this.sqlSentence = null;
-		this.sqlConnection = null;
 		
 		this.listener = null;
 		this.out = null;
@@ -36,15 +26,6 @@ public class Server{
 	}
 
 	public void initServer() throws Exception {
-		try {
-			String temp = "jdbc:mysql://" + sqlIp + ":" + sqlPort + "/" + sqlDb;
-    	    sqlConnection = DriverManager.getConnection(temp, "root", "");
-    	    sqlSentence = sqlConnection.createStatement();
-		}
-		catch(SQLException e) {
-    		System.out.println("Error conexion SQL.");
-    		return;
-    	}
 		
     	// Overload the kill signal
     	Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -80,7 +61,7 @@ public class Server{
                 in = new ObjectInputStream(clientSocket.getInputStream());
                 
                 // Starts threading
-                Thread t = new ClientController(clientSocket, in, out, client, sqlSentence, sqlConnection); 
+                Thread t = new ClientController(clientSocket, in, out, client); 
                 t.start();
 
                 client++;
