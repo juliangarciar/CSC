@@ -11,7 +11,7 @@ public class GestorBD {
 	final String SQL_DB = "filenimbusdb";
 	final String SQL_USER = "root";
 	final String SQL_USERPWD = "";
-	final String SQL_DRIVER = "com.mysql.jdbc.Driver";
+	//final String SQL_DRIVER = "com.mysql.jdbc.Driver";
 	final String DB_URL = "jdbc:mysql://" + SQL_IP + ":" + SQL_PORT + "/" + SQL_DB;
 	
 	Statement sqlSentence;
@@ -26,8 +26,10 @@ public class GestorBD {
 
 
 	public void conectarBD() throws SQLException {
-		// Registrar JDBC driver
-		//Class cl = Class.forName(SQL_DRIVER);
+		/* Registrar JDBC driver:
+		   A partir de JDK 6, los drivers JDBC 4 ya se registran automaticamente 
+		   y no es necesario el Class.forName(), solo que esten en el classpath de la JVM.*/
+		//Class.forName(SQL_DRIVER);
 		
 		// Abrir conexion
 	    System.out.println("Connecting to database...");
