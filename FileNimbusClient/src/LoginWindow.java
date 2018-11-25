@@ -84,7 +84,7 @@ public class LoginWindow {
 		frmFilenimbus.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent e) {
-				JOptionPane.showMessageDialog(null, "We will miss you.", "FileNimbus", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(frmFilenimbus, "We will miss you.", "FileNimbus", JOptionPane.INFORMATION_MESSAGE);
 				try{
 					mainClient.logout();
 					mainClient.close();
@@ -720,9 +720,20 @@ public class LoginWindow {
 					break;
 					
 				case DOWNLOAD:
-					/*for (int id=0; id<idFicheros.size(); id++) {
-						mainClient.download(Integer.parseInt(idFicheros.get(id)));
-					}*/
+					JFileChooser directoryChooser = new JFileChooser();
+					directoryChooser.setCurrentDirectory(new java.io.File("."));
+					directoryChooser.setDialogTitle("Saves directory");
+					directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+					directoryChooser.setAcceptAllFileFilterUsed(false);
+					
+					if(directoryChooser.showOpenDialog(userPanel) == JFileChooser.APPROVE_OPTION){
+						
+						// Directorio donde guardar los ficheros
+						String directorio = directoryChooser.getSelectedFile().getPath();
+						/*for (int id=0; id<idFicheros.size(); id++) {
+							mainClient.download(Integer.parseInt(idFicheros.get(id)));
+						}*/
+					}
 					break;
 					
 				default:
@@ -730,7 +741,7 @@ public class LoginWindow {
 					break;
 			}
 		} else {
-			JOptionPane.showMessageDialog(null, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(frmFilenimbus, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
 		}
 	}
 
@@ -794,6 +805,6 @@ public class LoginWindow {
 	
 	// Para tener una alerta de errores general con el mismo formato
     private void MensajeError(String mensaje) {
-    	JOptionPane.showMessageDialog(null, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+    	JOptionPane.showMessageDialog(frmFilenimbus, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
 	}
 }
