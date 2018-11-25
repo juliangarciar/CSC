@@ -50,8 +50,13 @@ public class LoginWindow {
 	final String ip = "localhost";
 	final Client mainClient = new Client(portNum, ip);
 	
+	// Acciones
 	final byte DOWNLOAD = 0;
 	final byte DELETE = 1;
+	
+	// Tamanyo ventana
+	final short WIDTH = 720;
+	final short HEIGHT = 480;
 	
 	final String NO_FILE_SELECTED = "No file selected";
 	
@@ -68,8 +73,8 @@ public class LoginWindow {
 	 */
 	private void initialize() {
 		frmFilenimbus = new JFrame();
-		frmFilenimbus.setMaximumSize(new Dimension(600, 400));
-		frmFilenimbus.setMinimumSize(new Dimension(600, 400));
+		frmFilenimbus.setMaximumSize(new Dimension(WIDTH, HEIGHT));
+		frmFilenimbus.setMinimumSize(new Dimension(WIDTH, HEIGHT));
 		frmFilenimbus.getContentPane().setFont(new Font("Arial", Font.PLAIN, 17));
 		frmFilenimbus.setForeground(SystemColor.desktop);
 		frmFilenimbus.setTitle("FileNimbus");
@@ -259,22 +264,19 @@ public class LoginWindow {
 		
 		JScrollPane scrollPane = new JScrollPane();
 		
-		JButton btnDownloadFile = new JButton("Download");
-		btnDownloadFile.setForeground(Color.WHITE);
-		btnDownloadFile.setBackground(new Color(100, 149, 237));
-		
-		// Download selected files
-		btnDownloadFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				recorrerListaTabla(DOWNLOAD);
-			}
-		});
-		
 		// Boton update declarado
 		JButton btnUpdateFiles = new JButton("Update");
 		btnUpdateFiles.setForeground(Color.WHITE);
 		btnUpdateFiles.setBackground(new Color(100, 149, 237));
 		
+ 		btnUpdateFiles.addActionListener(new ActionListener() {
+ 			public void actionPerformed(ActionEvent e) {
+ 				
+ 				// Rellenamos la tabla con los datos de los archivos
+ 				cargarDatosTabla();
+ 			}
+ 		});
+		 		
 		// Botones de seleccionar y deseleccionar
 		JButton btnSelectAll = new JButton("Select all");
 		btnSelectAll.setForeground(Color.WHITE);
@@ -283,56 +285,79 @@ public class LoginWindow {
 		JButton btnDeselectAll = new JButton("Deselect all");
 		btnDeselectAll.setForeground(Color.WHITE);
 		btnDeselectAll.setBackground(new Color(100, 149, 237));
+
+		// Boton para descargar archivos
+		JButton btnDownloadFile = new JButton("Download");
+		btnDownloadFile.setForeground(Color.WHITE);
+		btnDownloadFile.setBackground(new Color(100, 149, 237));
+		
+		btnDownloadFile.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				recorrerListaTabla(DOWNLOAD);
+			}
+		});
 		
 		// Boton para borrar archivos
 		JButton btnDelete = new JButton("Delete");
 		btnDelete.setForeground(new Color(255, 255, 255));
 		btnDelete.setBackground(new Color(100, 149, 237));
-		GroupLayout gl_panelMyFiles = new GroupLayout(panelMyFiles);
-		gl_panelMyFiles.setHorizontalGroup(
-			gl_panelMyFiles.createParallelGroup(Alignment.TRAILING)
-				.addGroup(gl_panelMyFiles.createSequentialGroup()
-					.addContainerGap()
-					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.TRAILING)
-						.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE)
-						.addGroup(gl_panelMyFiles.createSequentialGroup()
-							.addComponent(lblMyFiles)
-							.addGap(18)
-							.addComponent(btnSelectAll)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(btnDeselectAll)
-							.addPreferredGap(ComponentPlacement.RELATED, 60, Short.MAX_VALUE)
-							.addComponent(btnDownloadFile)
-							.addGap(18)
-							.addComponent(btnDelete)
-							.addGap(18)
-							.addComponent(btnUpdateFiles)))
-					.addContainerGap())
-		);
-		gl_panelMyFiles.setVerticalGroup(
-			gl_panelMyFiles.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_panelMyFiles.createSequentialGroup()
-					.addContainerGap()
-					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.BASELINE)
-						.addComponent(btnUpdateFiles)
-						.addComponent(lblMyFiles)
-						.addComponent(btnSelectAll)
-						.addComponent(btnDeselectAll)
-						.addComponent(btnDelete)
-						.addComponent(btnDownloadFile))
-					.addPreferredGap(ComponentPlacement.RELATED)
-					.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
-					.addContainerGap())
-		);
-		panelMyFiles.setLayout(gl_panelMyFiles);
 		
-		// Download selected files
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				recorrerListaTabla(DELETE);
 			}
 		});
 		
+		// Boton para compartir
+		JButton btnShare = new JButton("Share");
+		btnShare.setBackground(new Color(100, 149, 237));
+		btnShare.setForeground(new Color(255, 255, 255));
+		GroupLayout gl_panelMyFiles = new GroupLayout(panelMyFiles);
+		gl_panelMyFiles.setHorizontalGroup(
+			gl_panelMyFiles.createParallelGroup(Alignment.TRAILING)
+				.addGroup(gl_panelMyFiles.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.LEADING)
+						.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 674, Short.MAX_VALUE)
+						.addGroup(gl_panelMyFiles.createSequentialGroup()
+							.addComponent(lblMyFiles)
+							.addGap(18)
+							.addComponent(btnSelectAll)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(btnDeselectAll)
+							.addPreferredGap(ComponentPlacement.RELATED, 109, Short.MAX_VALUE)
+							.addComponent(btnDownloadFile)
+							.addGap(18)
+							.addComponent(btnShare)
+							.addPreferredGap(ComponentPlacement.UNRELATED)
+							.addComponent(btnDelete)
+							.addGap(18)
+							.addComponent(btnUpdateFiles)
+							.addContainerGap())))
+		);
+		gl_panelMyFiles.setVerticalGroup(
+			gl_panelMyFiles.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panelMyFiles.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.BASELINE)
+						.addComponent(lblMyFiles)
+						.addComponent(btnSelectAll)
+						.addComponent(btnDeselectAll)
+						.addComponent(btnUpdateFiles)
+						.addComponent(btnDelete)
+						.addComponent(btnShare)
+						.addComponent(btnDownloadFile))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
+					.addContainerGap())
+		);
+		panelMyFiles.setLayout(gl_panelMyFiles);
+		
+		btnShare.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO implementar
+			}
+		});
 		
 		// ********************************************* Tabla ***********************************************************
 		table=new JTable();
@@ -357,16 +382,6 @@ public class LoginWindow {
 		table.setModel(model);
 		asignarTamanyoColumnasTabla();
 		
-	    
-		// Update files button
- 		btnUpdateFiles.addActionListener(new ActionListener() {
- 			public void actionPerformed(ActionEvent e) {
- 				
- 				// Rellenamos la tabla con los datos de los archivos
- 				cargarDatosTabla();
- 			}
- 		});
- 		
  		// Seleccionar todas las filas de la tabla
  		btnSelectAll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -382,8 +397,7 @@ public class LoginWindow {
 				marcarDesmarcarFilas(false);
 			}
 		});
- 	// ********************************************* Fin Tabla ***********************************************************
-	    
+		// ********************************************* Fin Tabla ***********************************************************
 	    
 		JPanel panelUploadFiles = new JPanel();
 		panelUploadFiles.setBackground(SystemColor.inactiveCaptionBorder);
@@ -515,14 +529,14 @@ public class LoginWindow {
 						.addGroup(gl_panelUploadFiles.createSequentialGroup()
 							.addContainerGap()
 							.addComponent(lblNewFile)
-							.addGap(77)
+							.addPreferredGap(ComponentPlacement.RELATED, 435, Short.MAX_VALUE)
 							.addComponent(btnSelectFile)
-							.addGap(18)
+							.addPreferredGap(ComponentPlacement.UNRELATED)
 							.addComponent(btnUploadFile))
 						.addGroup(gl_panelUploadFiles.createSequentialGroup()
 							.addGap(22)
 							.addComponent(fileName)))
-					.addContainerGap(264, Short.MAX_VALUE))
+					.addContainerGap())
 		);
 		gl_panelUploadFiles.setVerticalGroup(
 			gl_panelUploadFiles.createParallelGroup(Alignment.LEADING)
@@ -530,8 +544,8 @@ public class LoginWindow {
 					.addGap(5)
 					.addGroup(gl_panelUploadFiles.createParallelGroup(Alignment.BASELINE)
 						.addComponent(lblNewFile)
-						.addComponent(btnSelectFile)
-						.addComponent(btnUploadFile))
+						.addComponent(btnUploadFile)
+						.addComponent(btnSelectFile))
 					.addPreferredGap(ComponentPlacement.UNRELATED)
 					.addComponent(fileName)
 					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
