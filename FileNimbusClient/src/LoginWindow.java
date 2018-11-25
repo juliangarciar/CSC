@@ -721,8 +721,7 @@ public class LoginWindow {
 					
 				case DOWNLOAD:
 					JFileChooser directoryChooser = new JFileChooser();
-					directoryChooser.setCurrentDirectory(new java.io.File("."));
-					directoryChooser.setDialogTitle("Saves directory");
+					directoryChooser.setDialogTitle("Save directory");
 					directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 					directoryChooser.setAcceptAllFileFilterUsed(false);
 					
@@ -730,9 +729,21 @@ public class LoginWindow {
 						
 						// Directorio donde guardar los ficheros
 						String directorio = directoryChooser.getSelectedFile().getPath();
-						/*for (int id=0; id<idFicheros.size(); id++) {
-							mainClient.download(Integer.parseInt(idFicheros.get(id)));
-						}*/
+						
+						// TODO comprobar que funcione de verdad
+						if (directoryChooser.getSelectedFile().canWrite()) {
+							System.out.println("escribir");
+							
+							for (int id=0; id<idFicheros.size(); id++) {
+								try {
+									mainClient.download(Integer.parseInt(idFicheros.get(id)), directorio);
+								} catch (Exception e) {
+									System.out.println(e.getMessage());
+								}
+							}
+						} else {
+							System.out.println("No puedo escribir");
+						}
 					}
 					break;
 					

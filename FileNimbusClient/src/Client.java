@@ -383,7 +383,7 @@ public class Client{
         else{println("Unknown error");}       
     }
 
-    public void download(int idArchivo) throws Exception {
+    public void download(int idArchivo, String directorio) throws Exception {
     	
     	
     	/*if(username==null) {
@@ -438,15 +438,7 @@ public class Client{
     	print("Direccion donde guardar: ");
     	File path = new File(System.console().readLine());
     	
-    	//Puede que no sea una dir valida
-    	if(!path.isDirectory()) {
-    		println("No es direccion!");
-    		return;
-    	}
-    	//Puede que la dir no exista
-    	if(!path.exists()) {
-    		println("La direccion no existe!");
-    	}
+    	
     	
     	try {
     	File filepath = new File(path.getAbsolutePath() +"/"+ filename);
