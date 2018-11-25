@@ -32,25 +32,28 @@ import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 
 public class LoginWindow {
-	private java.io.File chosenFile;
-	private JPanel loginPanel;	
-	private JPanel signUpPanel;
-	private JPanel userPanel;
+	java.io.File chosenFile;
+	JPanel loginPanel;	
+	JPanel signUpPanel;
+	JPanel userPanel;
 
-	private JFrame frmFilenimbus;
-	private JTextField userField;
-	private JPasswordField passField;
-	private JTextField userRegister;
-	private JPasswordField passRegister1;
-	private JPasswordField passRegister2;
-	private JTable table;
-	private DefaultTableModel model;
+	JFrame frmFilenimbus;
+	JTextField userField;
+	JPasswordField passField;
+	JTextField userRegister;
+	JPasswordField passRegister1;
+	JPasswordField passRegister2;
+	JTable table;
+	DefaultTableModel model;
 
-	private final int portNum = 8080;
-	private final String ip = "localhost";
-	private final Client mainClient = new Client(portNum, ip);
+	final int portNum = 8080;
+	final String ip = "localhost";
+	final Client mainClient = new Client(portNum, ip);
 	
-	private final String NO_FILE_SELECTED = "No file selected";
+	final byte DOWNLOAD = 0;
+	final byte DELETE = 1;
+	
+	final String NO_FILE_SELECTED = "No file selected";
 	
 	
 	/**
@@ -260,36 +263,12 @@ public class LoginWindow {
 		btnDownloadFile.setForeground(Color.WHITE);
 		btnDownloadFile.setBackground(new Color(100, 149, 237));
 		
-		
 		// Download selected files
 		btnDownloadFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
-				ArrayList<String> idFicheros = new ArrayList<String>();
-				int total = 0;
-				
-				// Pillar todas las filas seleccionadas
-				for(int fila=0; fila<table.getRowCount(); fila++) {
-					
-					// Si est� seleccionado, lo guardamos en el array
-					if(Boolean.valueOf(table.getValueAt(fila, 0).toString())) {
-		        		total++;
-		        		idFicheros.add(table.getValueAt(fila, 1).toString());
-		        	}
-		        }
-				
-				if (total > 0) {
-					//TODO Recorrer la lista y llamar uno a uno a download
-					//mainClient.download(idFicheros);
-					
-				} else {
-					JOptionPane.showMessageDialog(null, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
-				}
-			
+				recorrerListaTabla(DOWNLOAD);
 			}
 		});
-		
-		
 		
 		// Boton update declarado
 		JButton btnUpdateFiles = new JButton("Update");
@@ -350,42 +329,7 @@ public class LoginWindow {
 		// Download selected files
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
-				ArrayList<String> idFicheros = new ArrayList<String>();
-				int total = 0;
-				
-				// Pillar todas las filas seleccionadas
-				for(int fila=0; fila<table.getRowCount(); fila++) {
-					
-					// Si esta seleccionado, lo guardamos en el array
-					if(Boolean.valueOf(table.getValueAt(fila, 0).toString())) {
-		        		total++;
-		        		idFicheros.add(table.getValueAt(fila, 1).toString());
-		        	}
-		        }
-
-				if (total > 0) {
-					System.out.println("Hay :"+total);
-					System.out.println("idFicheros :"+idFicheros.size());
-					
-					// Recorrer la lista y llamar uno a uno a delete
-					for (int id=0; id<idFicheros.size(); id++) {
-						try {
-							System.out.println("Pasa "+id);
-							mainClient.delete(Integer.parseInt(idFicheros.get(id)));
-							
-						} catch (Exception e1) {
-							System.out.println(e1.getMessage());
-						}
-					}
-					
-					// Recargamos la tabla
-					cargarDatosTabla();
-					
-				} else {
-					JOptionPane.showMessageDialog(null, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
-				}
-			
+				recorrerListaTabla(DELETE);
 			}
 		});
 		
@@ -723,6 +667,51 @@ public class LoginWindow {
 			statLabel.setText("Server disconnected.");
 			btnLogin.setEnabled(false);
 			btnRegister.setEnabled(false);
+		}
+	}
+
+	protected void recorrerListaTabla(byte accion) {
+		ArrayList<String> idFicheros = new ArrayList<String>();
+		int total = 0;
+		
+		// Pillar todas las filas seleccionadas
+		for(int fila=0; fila<table.getRowCount(); fila++) {
+			
+			// Si esta seleccionado, lo guardamos en el array
+			if(Boolean.valueOf(table.getValueAt(fila, 0).toString())) {
+        		total++;
+        		idFicheros.add(table.getValueAt(fila, 1).toString());
+        	}
+        }
+
+		if (total > 0) {
+			switch (accion) {
+				case DELETE:
+					// Recorrer la lista y llamar uno a uno a delete
+					for (int id=0; id<idFicheros.size(); id++) {
+						try {
+							mainClient.delete(Integer.parseInt(idFicheros.get(id)));
+						} catch (Exception e1) {
+							System.out.println(e1.getMessage());
+						}
+					}
+					
+					// Recargamos la tabla
+					cargarDatosTabla();
+					break;
+					
+				case DOWNLOAD:
+					/*for (int id=0; id<idFicheros.size(); id++) {
+						mainClient.download(Integer.parseInt(idFicheros.get(id)));
+					}*/
+					break;
+					
+				default:
+					System.out.println("Action not contempled");
+					break;
+			}
+		} else {
+			JOptionPane.showMessageDialog(null, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
 		}
 	}
 

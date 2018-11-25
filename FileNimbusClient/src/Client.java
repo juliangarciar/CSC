@@ -383,7 +383,7 @@ public class Client{
         else{println("Unknown error");}       
     }
 
-    public void download(String idArchivo) throws Exception {
+    public void download(int idArchivo) throws Exception {
     	
     	
     	/*if(username==null) {
