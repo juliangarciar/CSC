@@ -435,9 +435,9 @@ public class LoginWindow {
 		panelMenu.add(menuBar);
 		
 		JMenu menu = new JMenu("");
+		menu.setIcon(new ImageIcon(LoginWindow.class.getResource("/main/resources/menuIconMini.png")));
 		menu.setBackground(new Color(30, 144, 255));
 		menuBar.add(menu);
-		//menu.setIcon(new ImageIcon(LoginWindow.class.getResource("./assets/menuIconMini.png")));
 		
 		JMenuItem mntmSettings = new JMenuItem("Settings");
 		mntmSettings.setHorizontalAlignment(SwingConstants.LEFT);

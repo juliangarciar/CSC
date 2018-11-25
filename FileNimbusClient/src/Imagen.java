@@ -10,7 +10,7 @@ import javax.swing.ImageIcon;
 public class Imagen extends javax.swing.JPanel {
 	
     String dir;
-    String url = "../assets/";
+    String url = "/main/resources/";
     
     public Imagen() { 
         this.setSize(50, 50); // tama�o del panel por defecto
