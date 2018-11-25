@@ -304,21 +304,28 @@ public class LoginWindow {
 		JButton btnDeselectAll = new JButton("Deselect all");
 		btnDeselectAll.setForeground(Color.WHITE);
 		btnDeselectAll.setBackground(new Color(100, 149, 237));
+		
+		// Boton para borrar archivos
+		JButton btnDelete = new JButton("Delete");
+		btnDelete.setForeground(new Color(255, 255, 255));
+		btnDelete.setBackground(new Color(100, 149, 237));
 		GroupLayout gl_panelMyFiles = new GroupLayout(panelMyFiles);
 		gl_panelMyFiles.setHorizontalGroup(
 			gl_panelMyFiles.createParallelGroup(Alignment.TRAILING)
 				.addGroup(gl_panelMyFiles.createSequentialGroup()
 					.addContainerGap()
 					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.TRAILING)
-						.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 544, Short.MAX_VALUE)
+						.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE)
 						.addGroup(gl_panelMyFiles.createSequentialGroup()
 							.addComponent(lblMyFiles)
 							.addGap(18)
 							.addComponent(btnSelectAll)
 							.addPreferredGap(ComponentPlacement.RELATED)
 							.addComponent(btnDeselectAll)
-							.addPreferredGap(ComponentPlacement.RELATED, 139, Short.MAX_VALUE)
+							.addPreferredGap(ComponentPlacement.RELATED, 60, Short.MAX_VALUE)
 							.addComponent(btnDownloadFile)
+							.addGap(18)
+							.addComponent(btnDelete)
 							.addGap(18)
 							.addComponent(btnUpdateFiles)))
 					.addContainerGap())
@@ -329,16 +336,58 @@ public class LoginWindow {
 					.addContainerGap()
 					.addGroup(gl_panelMyFiles.createParallelGroup(Alignment.BASELINE)
 						.addComponent(btnUpdateFiles)
-						.addComponent(btnDownloadFile)
 						.addComponent(lblMyFiles)
 						.addComponent(btnSelectAll)
-						.addComponent(btnDeselectAll))
+						.addComponent(btnDeselectAll)
+						.addComponent(btnDelete)
+						.addComponent(btnDownloadFile))
 					.addPreferredGap(ComponentPlacement.RELATED)
 					.addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
 					.addContainerGap())
 		);
 		panelMyFiles.setLayout(gl_panelMyFiles);
 		
+		// Download selected files
+		btnDelete.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				ArrayList<String> idFicheros = new ArrayList<String>();
+				int total = 0;
+				
+				// Pillar todas las filas seleccionadas
+				for(int fila=0; fila<table.getRowCount(); fila++) {
+					
+					// Si esta seleccionado, lo guardamos en el array
+					if(Boolean.valueOf(table.getValueAt(fila, 0).toString())) {
+		        		total++;
+		        		idFicheros.add(table.getValueAt(fila, 1).toString());
+		        	}
+		        }
+
+				if (total > 0) {
+					System.out.println("Hay :"+total);
+					System.out.println("idFicheros :"+idFicheros.size());
+					
+					// Recorrer la lista y llamar uno a uno a delete
+					for (int id=0; id<idFicheros.size(); id++) {
+						try {
+							System.out.println("Pasa "+id);
+							mainClient.delete(Integer.parseInt(idFicheros.get(id)));
+							
+						} catch (Exception e1) {
+							System.out.println(e1.getMessage());
+						}
+					}
+					
+					// Recargamos la tabla
+					cargarDatosTabla();
+					
+				} else {
+					JOptionPane.showMessageDialog(null, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
+				}
+			
+			}
+		});
 		
 		
 		// ********************************************* Tabla ***********************************************************

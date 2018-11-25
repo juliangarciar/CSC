@@ -342,7 +342,7 @@ public class Client{
         byte[] fileContent = Files.readAllBytes(file.toPath());
         //Genera AES
         KeyGenerator kgen = KeyGenerator.getInstance("AES");
-        kgen.init(128); //TODO Tama�o de clave secreta
+        kgen.init(128); //TODO Tamanyo de clave secreta
         SecretKey k = kgen.generateKey();
          
         //Encripta File AES
@@ -485,44 +485,37 @@ public class Client{
     	}*/
     }
 
-    /*public static void delete() throws Exception {
-    	//TODO ------------------------- delete
-    	if(username==null) {
-    		println("No estas logeado");
+    public void delete(int idArchivo) throws Exception {
+    	if(username == null) {
+    		println("You are not logged in");
     		return;
     	}
+    	secureSend("500");
     	
-    	SS("500");
-    	
-    	String r = (String) SR();
-    	if(r.equals("E501")) {
-    		println("Error de sincronizacion");
-    		return;
-    	}
-    	
-    	//Obtenemos el fichero
-    	int file=Integer.MAX_VALUE;
-    	print("Id del fichero a eliminar:");
-    	do {
-    		try {
-    			file = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un n�mero:");
-    		}
-    	}while(file==Integer.MAX_VALUE);
-    	
-    	SS(file);
-    	
-    	r=(String) SR();
-    	
-    	if(r.equals("E502")) {
-    		println("No tienes ese fichero");
-    	}else if(r.equals("502")) {
-    		println("Fichero eliminado!");
-    	}else {
-    		println("Error desconocido");
-    	}
-    }*/
+    	 Object r = secureReceive();
+         if(r.getClass().equals(String.class)) {
+         	if(((String)r).equals("E501")) {
+         		println("Synchronization error");//Logueado en cliente y no en servidor
+         		return;
+ 			}
+ 			else {
+         		secureSend(idArchivo); // Enviar el idArchivo	
+       
+         		// A la espera de confirmacion
+         		r = secureReceive();
+         		if(r.getClass().equals(String.class)) {
+         			if(((String)r).equals("502")){
+         				println("File deleted successfully");
+                     }
+                     else if(((String)r).equals("E502")){
+         				println("Error - File not delete");
+         			}
+                 }
+                 else{println("Unknown error");}
+         	}
+         }
+         else{println("Unknown error");}
+    }
 
     // Sends data with security checks
     private void secureSend(Object o) throws Exception{
