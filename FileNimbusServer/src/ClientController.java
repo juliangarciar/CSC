@@ -378,10 +378,10 @@ public class ClientController extends Thread{
 			 secureSend("501");
 		 }
 		 
-		 int r = (Integer) secureReceive();
+		 int idArchivo = (Integer) secureReceive();
 		 try {
 			 gestor.conectarBD(); // conectamos con la BD
-			 gestor.borrarArchivo(userID, r);
+			 gestor.borrarArchivo(userID, idArchivo);
 			 gestor.close();
 		 }
 		 catch(SQLException e){

@@ -43,11 +43,11 @@ public class GestorBD {
 		return resultados;
 	}
 	
-	public void borrarArchivo(int userID, int r) throws SQLException {
+	public void borrarArchivo(int userID, int idArchivo) throws SQLException {
 		System.out.println("Creating delete statement...");
 		
 		sqlSentence = sqlConnection.createStatement();
-		String sql = "DELETE FROM fileuser WHERE user=" + userID + " AND file=" + r;
+		String sql = "DELETE FROM fileuser WHERE user=" + userID + " AND file=" + idArchivo;
 		sqlSentence.executeUpdate(sql);
 	}
 	
