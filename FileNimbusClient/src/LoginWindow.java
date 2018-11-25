@@ -701,17 +701,22 @@ public class LoginWindow {
 		if (total > 0) {
 			switch (accion) {
 				case DELETE:
-					// Recorrer la lista y llamar uno a uno a delete
-					for (int id=0; id<idFicheros.size(); id++) {
-						try {
-							mainClient.delete(Integer.parseInt(idFicheros.get(id)));
-						} catch (Exception e1) {
-							System.out.println(e1.getMessage());
-						}
-					}
+					int opcion = JOptionPane.showConfirmDialog(userPanel, "Are you sure to delete?", 
+						"Delete files", JOptionPane.OK_CANCEL_OPTION);
 					
-					// Recargamos la tabla
-					cargarDatosTabla();
+					if (opcion == JOptionPane.OK_OPTION) {
+			             // Recorrer la lista y llamar uno a uno a delete
+						for (int id=0; id<idFicheros.size(); id++) {
+							try {
+								mainClient.delete(Integer.parseInt(idFicheros.get(id)));
+							} catch (Exception e1) {
+								System.out.println(e1.getMessage());
+							}
+						}
+						
+						// Recargamos la tabla
+						cargarDatosTabla();
+			        }
 					break;
 					
 				case DOWNLOAD:
