@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -384,97 +385,71 @@ public class Client{
     }
 
     public void download(int idArchivo, String directorio) throws Exception {
-    	
-    	
-    	/*if(username==null) {
-    		println("No estas logueado");
-    		return;
-    	}    	
-    	SS("400");
-    	String r =(String) SR();
-    	if(r.equals("E401")) {
-    		println("Error de sincronizacion");
+    	if(username == null) {
+    		println("You are not logged in");
     		return;
     	}
     	
-    	//Obtenemos el fichero
-    	int fileid=Integer.MAX_VALUE;
-    	print("Id del fichero a descargar:");
-    	do {
-    		try {
-    			fileid = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un n�mero:");
-    		}
-    	}while(fileid==Integer.MAX_VALUE);
-    	
-    	//Mandamos el fichero
-    	SS(fileid);
-    	
-    	r = (String) SR();
-     	if(r.equals("E402")) {
-     		println("El fichero no existe");
-     		return;
-     	}
-     	
-    	//Obtenemos el fichero, la clave, y el nombre
-    	byte[] file = (byte[]) SR();
-    	byte[] key = (byte[]) SR();
-    	String filename = (String) SR();
-    	
-    	//Desencriptar la clave
-    	Cipher c = Cipher.getInstance("RSA");
-    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
-    	key = c.doFinal(key);
-    	
-    	//Desencriptamos el file
-    	c = Cipher.getInstance("AES");
-    	SecretKey sk = new SecretKeySpec(key, 0, key.length, "AES");
-    	c.init(Cipher.DECRYPT_MODE, sk);
-    	file = c.doFinal(file);
-    	
-    	
-    	//Obtenemos la direccion
-    	print("Direccion donde guardar: ");
-    	File path = new File(System.console().readLine());
-    	
-    	
-    	
-    	try {
-    	File filepath = new File(path.getAbsolutePath() +"/"+ filename);
-	    	
-	    	//Metodo para usar nombres unicos
-	    	int i = 0;
-	    	
-	    	String name = filepath.getName().substring(0, filepath.getName().lastIndexOf("."));
-    		String ext = filepath.getName().substring(filepath.getName().lastIndexOf("."));
-    		
-	    	while (filepath.exists()) {
-	    		i++;
-	    		filename = name + " ("+i+")" + ext;
-	    		filepath = new File(path.getAbsolutePath() +"/"+ filename);
-	    		System.out.println(path.toString());
-	    	}
-	    	
-	    	
-	    	//Metodo para sobreescibir
-	    	
-	    	//if(filepath.exists()) {
-	    	//	filepath.delete();
-	    	//}
-	    	
-	    	try {
-		    	FileOutputStream stream = new FileOutputStream(filepath);
-			    stream.write(file);
-			    stream.close();
-		    	println("Fichero descargado con �xito!");
-	    	}catch(FileNotFoundException ef) {
-	    		println("No se encuentra el fichero, o acceso denegado");
-	    	}
-    	
-    	}catch(SecurityException e) {//Puede que nos denieguen el acceso
-    		println("No tienes permisos para acceder a esa carpeta");
-    	}*/
+    	secureSend("400");
+    	Object r = secureReceive();
+        if(r.getClass().equals(String.class)) {
+        	if(((String)r).equals("E401")) {
+        		println("Synchronization error");//Logueado en cliente y no en servidor
+			}
+			else {
+				// Enviamos el id del archivo
+				secureSend(idArchivo);
+				
+        		// A la espera de confirmacion
+        		r = secureReceive();
+        		if(r.getClass().equals(String.class)) {
+        			if(((String)r).equals("402")){
+        				
+        				//Obtenemos el fichero, la clave, y el nombre
+        		    	byte[] file = (byte[]) secureReceive();
+        		    	byte[] key = (byte[]) secureReceive();
+        		    	String filename = (String) secureReceive();
+        				
+        		    	//Desencriptar la clave
+        		    	Cipher c = Cipher.getInstance("RSA");
+        		    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
+        		    	key = c.doFinal(key);
+        		    	
+        		    	//Desencriptamos el file
+        		    	c = Cipher.getInstance("AES");
+        		    	SecretKey sk = new SecretKeySpec(key, 0, key.length, "AES");
+        		    	c.init(Cipher.DECRYPT_MODE, sk);
+        		    	file = c.doFinal(file);
+        				
+    		        	File filepath = new File(directorio +"/"+ filename);
+	    	    		
+		    	    	// Metodo para renombrar el fichero si ya existe en "directorio"
+    		        	if(filepath.exists()) {
+
+    		        		int contFichIguales = 0;
+    		        		String name = filepath.getName().substring(0, filepath.getName().lastIndexOf("."));
+    		        		String ext = filepath.getName().substring(filepath.getName().lastIndexOf("."));
+    		        		
+    		        		while (filepath.exists()) {
+    		        			contFichIguales++;
+    		    	    		filename = name + " ("+contFichIguales+")" + ext;
+    		    	    		filepath = new File(directorio +"/"+ filename);
+    		    	    	}
+    		    	    }
+		    	    	
+    		        	// Meter los datos del fichero en "filepath"
+	    		    	FileOutputStream stream = new FileOutputStream(filepath);
+	    			    stream.write(file);
+	    			    stream.close();
+                    }
+                    else if(((String)r).equals("E402")){
+        				println("Error - file not exist in BD");
+        			}
+                }
+                else{println("Unknown error");}
+        	}
+        }
+        else {println("Unknown error");}
     }
 
     public void delete(int idArchivo) throws Exception {
