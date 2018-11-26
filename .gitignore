@@ -1,3 +1,5 @@
 /.metadata/
 /.recommenders/
-*.class
+/.vscode/
+/FileNimbusServer/.settings/
+/FileNimbusClient/.settings/
