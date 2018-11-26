@@ -297,36 +297,6 @@ public class Client{
     		}
     	}
     	return lista;
-    	
-    	//Esto es solo mostrar con formato por consola
-    	//println("  | Id  | Compartido x | Nombre de Archivo |");
-    	//println("  |_____|______________|___________________|");
-    	/*if(id.length==shared.length && id.length==name.length) {
-    		for(int i=0; i<id.length; i++) {
-    			print("  | ");
-    			print(id[i]);
-    			int a = (int)(Math.log10((int)id[i]) +1);
-    			a=3-a; a = Math.max(a, 0); a= Math.min(a, 3);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("| ");
-    			
-    			print(shared[i]);
-    			
-    			a=((String)shared[i]).length();
-    			a=12-a; a = Math.max(a, 0); a= Math.min(a, 13);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("| ");
-    			
-    			print(name[i]);
-    			
-    			a=((String)name[i]).length();
-    			a=17-a; a = Math.max(a, 0); a= Math.min(a, 18);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("|");
-    			
-    			println("");
-    		}
-    	}*/
     }
 
     // TODO Checking this method
