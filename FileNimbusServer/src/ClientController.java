@@ -38,6 +38,7 @@ public class ClientController extends Thread{
 	final String CHANGE_PASS ="710";
 	final String CHANGE_USER ="720";
 	final String OTHER ="800";
+	final String CLOSE ="900";
 	
 	
 	public ClientController(Socket clientSocket, ObjectInputStream in, 
@@ -52,45 +53,45 @@ public class ClientController extends Thread{
 	 
 	public void run(){
 		 try {
-	        String i = (String)secureReceive();
-	        while(!i.isEmpty()) {
-	        	if(i.equals(CONECCT)) {
+	        String codigo = (String)secureReceive();
+	        while(!codigo.isEmpty()) {
+	        	if(codigo.equals(CONECCT)) {
 	        		connect();
-	        	}else if(i.equals(LOGIN)){
+	        	}else if(codigo.equals(LOGIN)){
 	        		login();
-	        	}else if(i.equals(SIGNIT)) {
+	        	}else if(codigo.equals(SIGNIT)) {
 	        		signIn();
-	        	}else if(i.equals(LOGOUT)) {
+	        	}else if(codigo.equals(LOGOUT)) {
 	        		logout();
-	        	}else if(i.equals(CHECK)){
+	        	}else if(codigo.equals(CHECK)){
 	        		check();
-	        	}else if(i.equals(UPLOAD)){
+	        	}else if(codigo.equals(UPLOAD)){
 	        		upload();
-	        	}else if(i.equals(DOWNLOAD)){
+	        	}else if(codigo.equals(DOWNLOAD)){
 	        		download();
-	        	}else if(i.equals(DELETE)){
+	        	}else if(codigo.equals(DELETE)){
 	        		delete();
-	        	}else if(i.equals(SHARE)){
+	        	}else if(codigo.equals(SHARE)){
 	        		share();
-	        	}else if(i.equals(CHANGE_PASS)){
+	        	}else if(codigo.equals(CHANGE_PASS)){
 	        		changePassword();
-	        	}else if(i.equals(CHANGE_USER)){
+	        	}else if(codigo.equals(CHANGE_USER)){
 	        		changeUser();
-	        	}else if(i.equals(OTHER)){
+	        	}else if(codigo.equals(OTHER)){
 	        		// Void
 	        		secureSend("E000");
-	        	}else if(i.equals("900")) {
+	        	}else if(codigo.equals(CLOSE)) {
 	        		// Close
 	        		secureSend("910");
 	        		System.out.println(this.kClient + ": Fin de conexion");
 	        		return;
 	        	}
 	        	else{
-	            	System.out.println(this.kClient + ": " + i);
+	            	System.out.println(this.kClient + ": " + codigo);
 	            	secureSend("E100");
             	}
 	        	
-            	i = (String)secureReceive();
+	        	codigo = (String)secureReceive();
             }
             out.close();
             in.close();
