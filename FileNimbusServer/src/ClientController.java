@@ -25,6 +25,21 @@ public class ClientController extends Thread{
 	KeyPair keyPair = null;
 	GestorBD gestor;
 	
+	// Codigos
+	final String CONECCT ="000";
+	final String LOGIN ="100";
+	final String SIGNIT ="110";
+	final String LOGOUT ="120";
+	final String CHECK ="200";
+	final String UPLOAD ="300";
+	final String DOWNLOAD ="400";
+	final String DELETE ="500";
+	final String SHARE ="600";
+	final String CHANGE_PASS ="710";
+	final String CHANGE_USER ="720";
+	final String OTHER ="800";
+	
+	
 	public ClientController(Socket clientSocket, ObjectInputStream in, 
 			ObjectOutputStream out, int client) {
 		this.clientSocket = clientSocket;
@@ -39,29 +54,29 @@ public class ClientController extends Thread{
 		 try {
 	        String i = (String)secureReceive();
 	        while(!i.isEmpty()) {
-	        	if(i.equals("000")) {
+	        	if(i.equals(CONECCT)) {
 	        		connect();
-	        	}else if(i.equals("100")){
+	        	}else if(i.equals(LOGIN)){
 	        		login();
-	        	}else if(i.equals("110")) {
+	        	}else if(i.equals(SIGNIT)) {
 	        		signIn();
-	        	}else if(i.equals("120")) {
+	        	}else if(i.equals(LOGOUT)) {
 	        		logout();
-	        	}else if(i.equals("200")){
+	        	}else if(i.equals(CHECK)){
 	        		check();
-	        	}else if(i.equals("300")){
+	        	}else if(i.equals(UPLOAD)){
 	        		upload();
-	        	}else if(i.equals("400")){
+	        	}else if(i.equals(DOWNLOAD)){
 	        		download();
-	        	}else if(i.equals("500")){
+	        	}else if(i.equals(DELETE)){
 	        		delete();
-	        	}else if(i.equals("600")){
+	        	}else if(i.equals(SHARE)){
 	        		share();
-	        	}else if(i.equals("710")){
+	        	}else if(i.equals(CHANGE_PASS)){
 	        		changePassword();
-	        	}else if(i.equals("720")){
+	        	}else if(i.equals(CHANGE_USER)){
 	        		changeUser();
-	        	}else if(i.equals("800")){
+	        	}else if(i.equals(OTHER)){
 	        		// Void
 	        		secureSend("E000");
 	        	}else if(i.equals("900")) {
@@ -119,8 +134,21 @@ public class ClientController extends Thread{
 		 catch(Exception e) {
 			 System.out.println(e);
 		 }
-	 }
-	 public void login() throws Exception {
+	}
+	
+	// TODO unificar esta comprobacion en todos los otros metodos
+	public boolean comprobarUserID() throws Exception {
+		if(userID!=Integer.MAX_VALUE) {
+			 secureSend("E101");
+			 return false;
+		 }
+		 return true;
+	}
+	
+	public void login() throws Exception {
+		/*if(!comprobarUserID()) {
+			 return;
+		 }*/
 		 if(userID!=Integer.MAX_VALUE) {
 			 secureSend("E101");
 			 return;
