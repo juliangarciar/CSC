@@ -94,72 +94,34 @@ public class Client{
 
     // Logs the client
     public boolean login(String user, String pass) throws Exception {
-        boolean loginResponse = false;
-    	secureSend("100");
-    	Object r = secureReceive();
-    	if(r.getClass().equals(String.class) && r.equals("E100")) {
-            println("You have already login");
-        }
-        else if(r.getClass().equals(String.class) && r.equals("101")) {
-        	// Get the data
-        	username = user;
-            pwd = pass;
-            
-    		// Hash
-    		MessageDigest messageDig = MessageDigest.getInstance("SHA-512");
-    		//Aqui se puede poner una sal para anadir seguridad, 
-    		byte[] pwdHash = messageDig.digest(pwd.getBytes(StandardCharsets.UTF_8));
-
-    		secureSend(username);
-            secureSend(pwdHash);
-            
-    		r = secureReceive();
-    		if(r.getClass().equals(String.class)) {
-    			if(r.equals("E102")) {
-    				
-    				username = null;
-    				pwd = null;
-    				// Pasamos la excepcion a la interfaz
-    				throw new Excepciones("Incorrect user");
-                }
-                else {
-    				r = secureReceive();
-    				if(r.getClass().equals(String.class) && r.equals("E103")) {
-    					
-    					username = null;
-                        pwd = null;
-                     // Pasamos la excepcion a la interfaz
-    					throw new Excepciones("Incorrect password");
-                    }
-                    else {
-    					byte[]  pub = (byte[])secureReceive();
-    					byte[]  priv = (byte[])secureReceive();
-    					
-    					// Create AES key from pwd
-    			        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-    			        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
-    			        SecretKey tmp = factory.generateSecret(spec);
-    			        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-    			        
-    			        // Decrypt
-    			        Cipher ciph = Cipher.getInstance("AES");
-    					ciph.init(Cipher.DECRYPT_MODE, secret);
-    					priv = ciph.doFinal(priv);
-    					
-    					// Cast from byte to key
-    					KeyFactory kf = KeyFactory.getInstance("RSA"); 
-    					PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));
-    					PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
-    					
-    					userKP = new KeyPair(publicKey, privateKey);
-    					
-                        println("Welcome " + username);
-                        loginResponse = true;
-    				}	
-    			}
-    		}
-        }
-        return loginResponse;
+            	
+        if (comprobarUserPassword(user, pass)) {
+			byte[]  pub = (byte[])secureReceive();
+			byte[]  priv = (byte[])secureReceive();
+			
+			// Create AES key from pwd
+	        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+	        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
+	        SecretKey tmp = factory.generateSecret(spec);
+	        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+	        
+	        // Decrypt
+	        Cipher ciph = Cipher.getInstance("AES");
+			ciph.init(Cipher.DECRYPT_MODE, secret);
+			priv = ciph.doFinal(priv);
+			
+			// Cast from byte to key
+			KeyFactory kf = KeyFactory.getInstance("RSA"); 
+			PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));
+			PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
+			
+			userKP = new KeyPair(publicKey, privateKey);
+			
+            println("Welcome " + username);
+            return true;
+		}	
+    			
+        return false;
     }
 
 	// Logout the client
@@ -454,6 +416,53 @@ public class Client{
          else{println("Unknown error");}
     }
 
+    private boolean comprobarUserPassword(String user, String pass) throws Exception {
+    	boolean loginResponse = false;
+    	secureSend("100");
+    	
+    	String datos = secureReceive().toString();
+    	if (datos.equals("E101")) {
+            println("You have already login");
+            
+        } else if (datos.equals("101")) {
+        	// Get the data
+        	username = user;
+            pwd = pass;
+            
+    		// Hash
+    		MessageDigest messageDig = MessageDigest.getInstance("SHA-512");
+    		//Aqui se puede poner una sal para anadir seguridad, 
+    		byte[] pwdHash = messageDig.digest(pwd.getBytes(StandardCharsets.UTF_8));
+
+    		secureSend(username);
+            secureSend(pwdHash);
+            
+            datos = secureReceive().toString();
+    		if(datos.equals("E102")) {
+    				
+				username = null;
+				pwd = null;
+				// Pasamos la excepcion a la interfaz
+				throw new Excepciones("Incorrect user");
+				
+            } else if (datos.equals("102")) { // Usuario correcto
+            	
+            	datos = secureReceive().toString();
+				if (datos.equals("E103")) {
+					
+					username = null;
+                    pwd = null;
+                 // Pasamos la excepcion a la interfaz
+					throw new Excepciones("Incorrect password");
+					
+				} else if (datos.equals("103")) { // Password correcto
+                	loginResponse = true;
+                }
+            }
+        }
+    	return loginResponse;
+    }
+    
     // Sends data with security checks
     private void secureSend(Object o) throws Exception{
         if(isSecure){

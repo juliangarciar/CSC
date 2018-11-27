@@ -36,6 +36,7 @@ public class LoginWindow {
 	JPanel loginPanel;	
 	JPanel signUpPanel;
 	JPanel userPanel;
+	JPanel panelSettings;
 
 	JFrame frmFilenimbus;
 	JTextField userField;
@@ -59,6 +60,9 @@ public class LoginWindow {
 	final short HEIGHT = 480;
 	
 	final String NO_FILE_SELECTED = "No file selected";
+	private JTextField txtNewuser;
+	private JTextField txtNewpassword;
+	private JTextField txtRepeatpassword;
 	
 	
 	/**
@@ -676,6 +680,173 @@ public class LoginWindow {
 		try{
 			mainClient.initializeClient();
 			statLabel.setText("Server connected.");
+			
+			panelSettings = new JPanel();
+			panelSettings.setBackground(new Color(30, 144, 255));
+			frmFilenimbus.getContentPane().add(panelSettings, "name_417711051764357");
+			
+			JLabel lblSettings = new JLabel("Settings");
+			lblSettings.setFont(new Font("Tahoma", Font.BOLD, 16));
+			
+			JPanel panel_ch_user = new JPanel();
+			
+			JPanel panel_ch_pass = new JPanel();
+			
+			JButton btnBack = new JButton("Back");
+			GroupLayout gl_panelSettings = new GroupLayout(panelSettings);
+			gl_panelSettings.setHorizontalGroup(
+				gl_panelSettings.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panelSettings.createSequentialGroup()
+						.addGap(18)
+						.addGroup(gl_panelSettings.createParallelGroup(Alignment.LEADING)
+							.addGroup(gl_panelSettings.createSequentialGroup()
+								.addComponent(btnBack)
+								.addContainerGap())
+							.addGroup(gl_panelSettings.createSequentialGroup()
+								.addGroup(gl_panelSettings.createParallelGroup(Alignment.LEADING)
+									.addComponent(lblSettings)
+									.addComponent(panel_ch_user, GroupLayout.PREFERRED_SIZE, 667, GroupLayout.PREFERRED_SIZE)
+									.addComponent(panel_ch_pass, GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE))
+								.addContainerGap(19, GroupLayout.PREFERRED_SIZE))))
+			);
+			gl_panelSettings.setVerticalGroup(
+				gl_panelSettings.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panelSettings.createSequentialGroup()
+						.addContainerGap()
+						.addComponent(lblSettings)
+						.addGap(18)
+						.addComponent(panel_ch_user, GroupLayout.PREFERRED_SIZE, 142, GroupLayout.PREFERRED_SIZE)
+						.addPreferredGap(ComponentPlacement.UNRELATED)
+						.addComponent(panel_ch_pass, GroupLayout.PREFERRED_SIZE, 170, GroupLayout.PREFERRED_SIZE)
+						.addPreferredGap(ComponentPlacement.RELATED, 35, Short.MAX_VALUE)
+						.addComponent(btnBack)
+						.addContainerGap())
+			);
+			
+			JLabel lblChangePassword = new JLabel("Change password");
+			lblChangePassword.setFont(new Font("Tahoma", Font.BOLD, 14));
+			
+			txtNewpassword = new JTextField();
+			txtNewpassword.setColumns(10);
+			
+			JButton btnChange_password = new JButton("Change");
+			btnChange_password.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					changePassword();
+				}
+			});
+			btnChange_password.setBackground(new Color(100, 149, 237));
+			btnChange_password.setForeground(new Color(255, 255, 255));
+			
+			txtRepeatpassword = new JTextField();
+			txtRepeatpassword.setColumns(10);
+			
+			JLabel lblPassword = new JLabel("Password:");
+			
+			JLabel lblRepeatPassword = new JLabel("Repeat password:");
+			GroupLayout gl_panel_ch_pass = new GroupLayout(panel_ch_pass);
+			gl_panel_ch_pass.setHorizontalGroup(
+				gl_panel_ch_pass.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_pass.createSequentialGroup()
+						.addContainerGap(588, Short.MAX_VALUE)
+						.addComponent(btnChange_password)
+						.addContainerGap())
+					.addGroup(gl_panel_ch_pass.createSequentialGroup()
+						.addGap(32)
+						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.LEADING)
+							.addComponent(lblChangePassword)
+							.addGroup(gl_panel_ch_pass.createSequentialGroup()
+								.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.TRAILING)
+									.addComponent(lblPassword)
+									.addComponent(lblRepeatPassword))
+								.addGap(18)
+								.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.LEADING, false)
+									.addComponent(txtRepeatpassword)
+									.addComponent(txtNewpassword, GroupLayout.DEFAULT_SIZE, 340, Short.MAX_VALUE))))
+						.addContainerGap(188, Short.MAX_VALUE))
+			);
+			gl_panel_ch_pass.setVerticalGroup(
+				gl_panel_ch_pass.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_pass.createSequentialGroup()
+						.addContainerGap()
+						.addComponent(lblChangePassword)
+						.addGap(18)
+						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.BASELINE)
+							.addComponent(txtNewpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblPassword))
+						.addPreferredGap(ComponentPlacement.UNRELATED)
+						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.BASELINE)
+							.addComponent(txtRepeatpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblRepeatPassword))
+						.addPreferredGap(ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+						.addComponent(btnChange_password)
+						.addContainerGap())
+			);
+			panel_ch_pass.setLayout(gl_panel_ch_pass);
+			
+			JLabel lblChangeUserName = new JLabel("Change user name");
+			lblChangeUserName.setFont(new Font("Tahoma", Font.BOLD, 14));
+			
+			txtNewuser = new JTextField();
+			txtNewuser.setColumns(10);
+			
+			JButton btnChange_user = new JButton("Change");
+			btnChange_user.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent arg0) {
+					changeUser();
+				}
+			});
+			btnChange_user.setForeground(new Color(255, 255, 255));
+			btnChange_user.setBackground(new Color(100, 149, 237));
+			
+			JLabel lblName = new JLabel("Name:");
+			
+			JLabel lblOldname = new JLabel("");
+			
+			JLabel lblNewName = new JLabel("New name:");
+			GroupLayout gl_panel_ch_user = new GroupLayout(panel_ch_user);
+			gl_panel_ch_user.setHorizontalGroup(
+				gl_panel_ch_user.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addContainerGap(588, Short.MAX_VALUE)
+						.addComponent(btnChange_user)
+						.addContainerGap())
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addGap(42)
+						.addComponent(lblChangeUserName)
+						.addContainerGap(496, Short.MAX_VALUE))
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addGap(67)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.TRAILING)
+							.addComponent(lblName)
+							.addComponent(lblNewName))
+						.addGap(18)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.LEADING)
+							.addComponent(txtNewuser, GroupLayout.PREFERRED_SIZE, 339, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblOldname))
+						.addContainerGap(189, Short.MAX_VALUE))
+			);
+			gl_panel_ch_user.setVerticalGroup(
+				gl_panel_ch_user.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addContainerGap()
+						.addComponent(lblChangeUserName)
+						.addGap(18)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.BASELINE)
+							.addComponent(lblName)
+							.addComponent(lblOldname))
+						.addGap(14)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.BASELINE)
+							.addComponent(txtNewuser, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblNewName))
+						.addContainerGap(48, Short.MAX_VALUE))
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addContainerGap(108, Short.MAX_VALUE)
+						.addComponent(btnChange_user)
+						.addContainerGap())
+			);
+			panel_ch_user.setLayout(gl_panel_ch_user);
+			panelSettings.setLayout(gl_panelSettings);
 		}
 		catch(Exception e){
 			statLabel.setText("Server disconnected.");
@@ -683,6 +854,27 @@ public class LoginWindow {
 			btnRegister.setEnabled(false);
 		}
 	}
+
+	protected void changeUser() {
+		// TODO hacer comprobaciones
+		
+	}
+
+	protected void changePassword() {
+		// TODO hacer comprobaciones
+		
+	}
+	
+	protected boolean comprobarPassword() {
+		
+		String paswd = JOptionPane.showInputDialog(
+				   panelSettings,
+				   "Input old password:",
+				   JOptionPane.WARNING_MESSAGE);
+		
+		return true;
+	}
+	
 
 	protected void recorrerListaTabla(byte accion) {
 		ArrayList<String> idFicheros = new ArrayList<String>();
