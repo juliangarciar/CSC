@@ -27,6 +27,7 @@ public class ClientController extends Thread{
 	
 	// Codigos
 	final String CONECCT ="000";
+	final String CHECK_PWD ="099";
 	final String LOGIN ="100";
 	final String SIGNIT ="110";
 	final String LOGOUT ="120";
@@ -57,6 +58,8 @@ public class ClientController extends Thread{
 	        while(!codigo.isEmpty()) {
 	        	if(codigo.equals(CONECCT)) {
 	        		connect();
+	        	}else if(codigo.equals(CHECK_PWD)){
+	        		comprobarUserPassword(CHECK_PWD);
 	        	}else if(codigo.equals(LOGIN)){
 	        		login();
 	        	}else if(codigo.equals(SIGNIT)) {
@@ -98,7 +101,7 @@ public class ClientController extends Thread{
             clientSocket.close();
 		}
 		catch(Exception e) {
-			 System.out.println(e.getMessage());;
+			 System.out.println(e.getMessage());
 		}
 	}
 	   
@@ -138,13 +141,13 @@ public class ClientController extends Thread{
 	}
 	
 	// TODO unificar esta comprobacion en todos los otros metodos
-	public boolean comprobarUserID() throws Exception {
+	/*public boolean comprobarUserID() throws Exception {
 		if(userID!=Integer.MAX_VALUE) {
 			 secureSend("E101");
 			 return false;
 		 }
 		 return true;
-	}
+	}*/
 	
 	public void login() throws Exception {
 		/*if(!comprobarUserID()) {
@@ -155,46 +158,60 @@ public class ClientController extends Thread{
 			 return;
 		 }
 		 secureSend("101");
-		 Object user = secureReceive();
-		 Object pasw = secureReceive();
-		 
-		 if(user.getClass().equals(String.class) && user.getClass().equals(String.class)) {
-			 // Check keys
-			 gestor.conectarBD(); // conectamos con la BD
-			 ResultSet rs = gestor.ejecutarQuery("SELECT * FROM user WHERE user='" + user + "'");
-			 if(rs.next()) {
-				 secureSend("102");
-				 byte[] pwd = rs.getBlob("pwd").getBytes(1, (int) rs.getBlob("pwd").length());
-				 if(Arrays.equals(pwd, (byte[])pasw)){
-					 secureSend("103");
-					// Send keys
-					 Blob privb = rs.getBlob("private");
-					 Blob pubb = rs.getBlob("public");
-					 
-					 byte[] priv = privb.getBytes(1, (int) privb.length());
-					 byte[] pub = pubb.getBytes(1, (int) pubb.length());
-					 
-					 secureSend(pub);
-					 secureSend(priv);
-					 
-					 userID = rs.getInt("id");
-					 
-					 System.out.println(kClient + ": Login: " + user);
-				 }
-				 else {
-					 secureSend("E103"); // Invalid pass
-					 System.out.println("Error clave");
-				 }
-				 
-				 // Limpiar resultSet y cerrar conexion con BD
-				 rs.close();
-				 gestor.close();
-			 }
-			 else {
-				 secureSend("E102"); // Invalid user
-			 }
-		 }
+		 comprobarUserPassword(LOGIN);
 	 }
+	
+	public void comprobarUserPassword(String accion) throws Exception {
+		Object user = secureReceive();
+		Object pasw = secureReceive();
+
+		if (user.getClass().equals(String.class)) {
+			// Check keys
+			gestor.conectarBD(); // conectamos con la BD
+			ResultSet rs = gestor.ejecutarQuery("SELECT * FROM user WHERE user='" + user + "'");
+			if (rs.next()) {
+				secureSend("102");
+				
+				byte[] pwd = rs.getBlob("pwd").getBytes(1, (int) rs.getBlob("pwd").length());
+				if (Arrays.equals(pwd, (byte[])pasw)) {
+					secureSend("103");
+					
+					if (accion.equals(LOGIN)) {
+						// Send keys
+						Blob privb = rs.getBlob("private");
+						Blob pubb = rs.getBlob("public");
+				
+						byte[] priv = privb.getBytes(1, (int) privb.length());
+						byte[] pub = pubb.getBytes(1, (int) pubb.length());
+				
+						secureSend(pub);
+						secureSend(priv);
+				
+						userID = rs.getInt("id");
+						System.out.println(kClient + ": Login: " + user);
+					}
+				}
+				else {
+					secureSend("E103"); // Invalid pass
+					rs.close();
+					gestor.close();
+					System.out.println("Error clave");
+					return;
+				}
+		
+				// Limpiar resultSet y cerrar conexion con BD
+				rs.close();
+				gestor.close();
+			}
+			else {
+				secureSend("E102"); // Invalid user
+				rs.close();
+				gestor.close();
+				return;
+			}
+		}
+	}
+	
 	 public void logout() throws Exception {
 		 if(userID == Integer.MAX_VALUE) {
 			 secureSend("E121");

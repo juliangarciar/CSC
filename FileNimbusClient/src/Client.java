@@ -38,11 +38,15 @@ public class Client{
 	private Key connectionKey = null; 
 	private KeyPair userKP = null;
 
-	
 	private ObjectOutputStream out = null;
 	private ObjectInputStream in = null;
     private Socket socket = null;
     
+ // Codigos
+ 	final String CHECK_PWD ="099";
+ 	final String LOGIN ="100";
+ 	
+ 	
     // Client class constructor 
     public Client(int portNum, String ip){
         this.portNum = portNum;
@@ -95,7 +99,7 @@ public class Client{
     // Logs the client
     public boolean login(String user, String pass) throws Exception {
             	
-        if (comprobarUserPassword(user, pass)) {
+        if (comprobarUserPassword(user, pass, LOGIN)) {
 			byte[]  pub = (byte[])secureReceive();
 			byte[]  priv = (byte[])secureReceive();
 			
@@ -416,51 +420,58 @@ public class Client{
          else{println("Unknown error");}
     }
 
-    private boolean comprobarUserPassword(String user, String pass) throws Exception {
-    	boolean loginResponse = false;
-    	secureSend("100");
+    // Se llama desde el panel de settings para comprobar si la contrasenya es correcta
+    public boolean comprobarUserPassword(String pass) throws Exception {
+    	return comprobarUserPassword(username, pass, CHECK_PWD);
+    }
+    
+    // Comprueba que el usuario y la contrasenya coinciden con los datos de la BD
+    // Se utiliza en los paneles Login y Settings
+    public boolean comprobarUserPassword(String user, String pass, String codigo) throws Exception {
     	
-    	String datos = secureReceive().toString();
-    	if (datos.equals("E101")) {
-            println("You have already login");
-            
-        } else if (datos.equals("101")) {
-        	// Get the data
-        	username = user;
-            pwd = pass;
-            
-    		// Hash
-    		MessageDigest messageDig = MessageDigest.getInstance("SHA-512");
-    		//Aqui se puede poner una sal para anadir seguridad, 
-    		byte[] pwdHash = messageDig.digest(pwd.getBytes(StandardCharsets.UTF_8));
+    	String datos = "";
+    	secureSend(codigo); 					// Envia LOGIN o CHECK_PWD
+    	
+    	if (codigo.equals(LOGIN)) {
+    		datos = secureReceive().toString();
+        	if (datos.equals("E101")) {
+                println("You have already login");
+                return false;
+            } else if (datos.equals("101")) {
+            	username = user; 				// se asigna 1 vez
+            }
+    	}
+		// Hash
+		MessageDigest messageDig = MessageDigest.getInstance("SHA-512");
+		
+		//Aqui se puede poner una sal para anadir seguridad, 
+		byte[] pwdHash = messageDig.digest(pass.getBytes(StandardCharsets.UTF_8));
 
-    		secureSend(username);
-            secureSend(pwdHash);
-            
-            datos = secureReceive().toString();
-    		if(datos.equals("E102")) {
-    				
-				username = null;
-				pwd = null;
-				// Pasamos la excepcion a la interfaz
-				throw new Excepciones("Incorrect user");
+		secureSend(username);
+        secureSend(pwdHash);
+        
+        datos = secureReceive().toString();
+		if(datos.equals("E102")) {
 				
-            } else if (datos.equals("102")) { // Usuario correcto
-            	
-            	datos = secureReceive().toString();
-				if (datos.equals("E103")) {
-					
-					username = null;
-                    pwd = null;
-                 // Pasamos la excepcion a la interfaz
-					throw new Excepciones("Incorrect password");
-					
-				} else if (datos.equals("103")) { // Password correcto
-                	loginResponse = true;
-                }
+			//username = null;
+			// Pasamos la excepcion a la interfaz
+			throw new Excepciones("Incorrect user");
+			
+        } else if (datos.equals("102")) { // Usuario correcto
+        	
+        	datos = secureReceive().toString();
+			if (datos.equals("E103")) {
+				
+                //pwd = null;
+             // Pasamos la excepcion a la interfaz
+				throw new Excepciones("Incorrect password");
+				
+			} else if (datos.equals("103")) { // Password correcto
+				pwd = pass;
+            	return true;
             }
         }
-    	return loginResponse;
+    	return false;
     }
     
     // Sends data with security checks
