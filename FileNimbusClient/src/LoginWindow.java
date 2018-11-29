@@ -39,8 +39,8 @@ public class LoginWindow {
 	JPanel loginPanel, signUpPanel, userPanel, panelSettings;
 
 	JLabel statLabel, lblUser, lblOldname;
-	JTextField userField, userRegister, txtNewuser, txtNewpassword, txtRepeatpassword;
-	JPasswordField passField, passRegister1, passRegister2;
+	JTextField userField, userRegister, txtNewuser;
+	JPasswordField passField, passRegister1, passRegister2, passNewpassword, passRepeatpassword;
 	
 	JTable table;
 	DefaultTableModel model;
@@ -722,8 +722,8 @@ public class LoginWindow {
 			JLabel lblChangePassword = new JLabel("Change password");
 			lblChangePassword.setFont(new Font("Tahoma", Font.BOLD, 14));
 			
-			txtNewpassword = new JTextField();
-			txtNewpassword.setColumns(10);
+			passNewpassword = new JPasswordField();
+			passNewpassword.setColumns(10);
 			
 			JButton btnChange_password = new JButton("Change");
 			btnChange_password.addActionListener(new ActionListener() {
@@ -734,8 +734,8 @@ public class LoginWindow {
 			btnChange_password.setBackground(new Color(100, 149, 237));
 			btnChange_password.setForeground(new Color(255, 255, 255));
 			
-			txtRepeatpassword = new JTextField();
-			txtRepeatpassword.setColumns(10);
+			passRepeatpassword = new JPasswordField();
+			passRepeatpassword.setColumns(10);
 			
 			JLabel lblPassword = new JLabel("Password:");
 			
@@ -757,8 +757,8 @@ public class LoginWindow {
 									.addComponent(lblRepeatPassword))
 								.addGap(18)
 								.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.LEADING, false)
-									.addComponent(txtRepeatpassword)
-									.addComponent(txtNewpassword, GroupLayout.DEFAULT_SIZE, 340, Short.MAX_VALUE))))
+									.addComponent(passRepeatpassword)
+									.addComponent(passNewpassword, GroupLayout.DEFAULT_SIZE, 340, Short.MAX_VALUE))))
 						.addContainerGap(188, Short.MAX_VALUE))
 			);
 			gl_panel_ch_pass.setVerticalGroup(
@@ -768,11 +768,11 @@ public class LoginWindow {
 						.addComponent(lblChangePassword)
 						.addGap(18)
 						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.BASELINE)
-							.addComponent(txtNewpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(passNewpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 							.addComponent(lblPassword))
 						.addPreferredGap(ComponentPlacement.UNRELATED)
 						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.BASELINE)
-							.addComponent(txtRepeatpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(passRepeatpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 							.addComponent(lblRepeatPassword))
 						.addPreferredGap(ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
 						.addComponent(btnChange_password)
@@ -865,8 +865,8 @@ public class LoginWindow {
 	protected void limpiarCamposSettings() {
 		lblOldname.setText("");
 		txtNewuser.setText("");
-		txtNewpassword.setText("");
-		txtRepeatpassword.setText("");
+		passNewpassword.setText("");
+		passRepeatpassword.setText("");
 	}
 	
 	protected void changeUser() {
@@ -897,8 +897,8 @@ public class LoginWindow {
 		// TODO hacer comprobacion de longitud
 		try {
 			if (comprobarPassword()) {
-				String newPWD = txtNewpassword.getText();
-				String rePWD = txtRepeatpassword.getText();
+				String newPWD = new String(passNewpassword.getText());
+				String rePWD = new String(passRepeatpassword.getText());
 				
 				// Campos vacios
 				if (newPWD.equals("")) {
@@ -911,6 +911,7 @@ public class LoginWindow {
 				if (newPWD.equals(rePWD)) {
 					mainClient.cambiarPassword(newPWD);
 					limpiarCamposSettings();
+					lblOldname.setText(mainClient.getUserName());
 				} else {
 					throw new Excepciones("Passwords don't match");
 				}
