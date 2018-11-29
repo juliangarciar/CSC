@@ -45,7 +45,18 @@ public class Client{
  // Codigos
  	final String CHECK_PWD ="099";
  	final String LOGIN ="100";
- 	
+ 	final String SIGNIT ="110";
+ 	final String LOGOUT ="120";
+ 	final String CHECK ="200";
+ 	final String UPLOAD ="300";
+	final String DOWNLOAD ="400";
+	final String DELETE ="500";
+	final String SHARE ="600";
+	final String CHANGE_PASS ="710";
+	final String CHANGE_USER ="720";
+	final String OTHER ="800";
+	final String CLOSE ="900";
+	
  	
     // Client class constructor 
     public Client(int portNum, String ip){
@@ -134,7 +145,7 @@ public class Client{
     		println("You are not logged in");
         }
         else{
-    		secureSend("120");
+    		secureSend(LOGOUT);
     		Object r = secureReceive();
     		if(r.getClass().equals(String.class)) {
     			if(((String) r).equals("121")) {
@@ -154,7 +165,7 @@ public class Client{
     }
 
     public void close() throws Exception{
-    	secureSend("900");
+    	secureSend(CLOSE);
 		if(secureReceive().equals("910")) {
 			socket.close();
 			in.close();
@@ -171,7 +182,7 @@ public class Client{
 
     public boolean signUp(String user, String pass) throws Exception {
         boolean signinResponse = false;
-        secureSend("110");
+        secureSend(SIGNIT);
         println("Debug-2");
         Object r = secureReceive();
         println("Debug-1");
@@ -241,7 +252,7 @@ public class Client{
     		return lista;
     	}
     	
-    	secureSend("200");
+    	secureSend(CHECK);
     	Object r = secureReceive();
     	if(r.getClass().equals(String.class) && ((String)r).equals("E201")) {
     		println("Synchronization error");
@@ -293,7 +304,7 @@ public class Client{
         byte[] kcrypted = c.doFinal(k.getEncoded());
          
         
-        secureSend("300");
+        secureSend(UPLOAD);
         Object r = secureReceive();
         if(r.getClass().equals(String.class)) {
         	if(((String)r).equals("E301")) {
@@ -326,7 +337,7 @@ public class Client{
     		return;
     	}
     	
-    	secureSend("400");
+    	secureSend(DOWNLOAD);
     	Object r = secureReceive();
         if(r.getClass().equals(String.class)) {
         	if(((String)r).equals("E401")) {
@@ -393,7 +404,7 @@ public class Client{
     		println("You are not logged in");
     		return;
     	}
-    	secureSend("500");
+    	secureSend(DELETE);
     	
     	 Object r = secureReceive();
          if(r.getClass().equals(String.class)) {
