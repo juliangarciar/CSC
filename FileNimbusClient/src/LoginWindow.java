@@ -83,7 +83,8 @@ public class LoginWindow {
 		frmFilenimbus.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent e) {
-				JOptionPane.showMessageDialog(frmFilenimbus, "We will miss you.", "FileNimbus", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(frmFilenimbus, "We will miss you.",
+						"FileNimbus", JOptionPane.INFORMATION_MESSAGE);
 				try{
 					mainClient.logout();
 					mainClient.close();
@@ -363,6 +364,12 @@ public class LoginWindow {
 		btnShare.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO implementar
+				
+				String shareUser = JOptionPane.showInputDialog( userPanel,
+						"Enter the username to share:", JOptionPane.INFORMATION_MESSAGE);
+				
+				// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
+				//if(action == 0) {
 			}
 		});
 		
@@ -476,7 +483,7 @@ public class LoginWindow {
 					mainClient.logout();
 				}
 				catch(Exception o){
-					// TODO Implement logout exception catch
+					System.out.println(o.getMessage());
 				}
 				loginPanel.setVisible(true);
 				userPanel.setVisible(false);
@@ -570,23 +577,36 @@ public class LoginWindow {
 		// File upload button
 		btnUploadFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(chosenFile.exists()){
-					try{
-						mainClient.upload(chosenFile);
-						fileName.setText(NO_FILE_SELECTED);
-						
-						// Actualizamos la tabla de archivos
-						cargarDatosTabla();
+				try {
+					if (chosenFile == null) {
+						throw new Excepciones("File not selected");
 					}
-					catch(Exception u){
-						System.out.println("File could not be uploaded.");
+					
+					if (chosenFile.exists()) {
+						try {
+							mainClient.upload(chosenFile);
+							fileName.setText(NO_FILE_SELECTED);
+							chosenFile = null;
+							
+							// Actualizamos la tabla de archivos
+							cargarDatosTabla();
+						}
+						catch(Exception u) {
+							System.out.println("File could not be uploaded");
+						}
 					}
-				}
-				else{
-					System.out.println("File not selected.");
-				}
+					else {
+						throw new Excepciones("File not exist");
+					}
+			} catch(Excepciones ex) {
+				MensajeError(ex.exErrorPersonalizado());
+				return;
+			} catch (Exception ex) {
+				System.out.println(ex.getMessage());
+				return;
 			}
-		});
+		}
+	});
 		
 		// File select button
 		btnSelectFile.addActionListener(new ActionListener() {
@@ -627,6 +647,7 @@ public class LoginWindow {
 			}
 		});
 		
+		
 		// Confirm new signup button
 		btnRegisterConfirm.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -636,8 +657,12 @@ public class LoginWindow {
 					String pwd2 = new String(passRegister2.getPassword());
 	
 					if (userName.equals("") || pwd1.equals("") || pwd2.equals("")) {
-						throw new Excepciones("Any empty fields");
+						throw new Excepciones("Some field is empty");
 					}
+					
+					// Comprobar longitudes de los campos
+					comprobarLongUser(userName);
+					comprobarLongPass(pwd1);
 					
 					if (pwd1.equals(pwd2)){
 						// Call the register method
@@ -649,7 +674,7 @@ public class LoginWindow {
 								limpiarCamposSingIn();
 							}
 						}
-						catch(Exception a){
+						catch(Exception a) {
 							throw new Excepciones("Error when trying to sign up.");
 						}
 					}
@@ -851,6 +876,28 @@ public class LoginWindow {
 		}
 	}
 	
+	// Comprueba la longitud del campo User name
+	protected void comprobarLongUser(String userName) throws Excepciones {
+		if (!comprobarLongitud(userName, 6, 8)) {
+			throw new Excepciones("User: min lenght: 6 and max lenght 8");
+		}
+	}
+	
+	// Comprueba la longitud de la contrasenya
+	protected void comprobarLongPass(String pass) throws Excepciones {
+		if (!comprobarLongitud(pass, 6, 8)) {
+			throw new Excepciones("Pass: min lenght: 6 and max lenght 8");
+		}
+	}
+
+	// Comprueba que la longitud este dentro de un rango
+	protected boolean comprobarLongitud(String texto, int min, int max) {
+		if ((texto.length() >= min) && (texto.length() <= max)) {
+			return true;
+		}
+		return false;
+	}
+	
 	protected void limpiarCamposLogin() {
 		 userField.setText("");
 		 passField.setText("");
@@ -877,12 +924,15 @@ public class LoginWindow {
 				// Campo vacio
 				if (newName.equals("")) {
 					throw new Excepciones("Empty user name");
-					
-				} else {
-					mainClient.cambiarUser(newName);
-					limpiarCamposSettings();
-					lblOldname.setText(newName);
 				}
+				// Comprobar longitud del campo
+				comprobarLongUser(newName);
+				
+				// Cambiar nombre de usuario
+				mainClient.cambiarUser(newName);
+				limpiarCamposSettings();
+				lblOldname.setText(newName);
+				
 			}
 		} catch(Excepciones ex) {
 			MensajeError(ex.exErrorPersonalizado());
@@ -894,11 +944,10 @@ public class LoginWindow {
 	}
 
 	protected void changePassword() {
-		// TODO hacer comprobacion de longitud
 		try {
 			if (comprobarPassword()) {
-				String newPWD = new String(passNewpassword.getText());
-				String rePWD = new String(passRepeatpassword.getText());
+				String newPWD = new String(passNewpassword.getPassword());
+				String rePWD = new String(passRepeatpassword.getPassword());
 				
 				// Campos vacios
 				if (newPWD.equals("")) {
@@ -906,6 +955,9 @@ public class LoginWindow {
 				} else if (rePWD.equals("")) {
 					throw new Excepciones("Empty repeat password");
 				}
+				
+				// Comprobar longitud del campo
+				comprobarLongPass(newPWD);
 				
 				// Campos iguales
 				if (newPWD.equals(rePWD)) {
@@ -915,7 +967,6 @@ public class LoginWindow {
 				} else {
 					throw new Excepciones("Passwords don't match");
 				}
-				
 			}
 		} catch(Excepciones ex) {
 			MensajeError(ex.exErrorPersonalizado());
@@ -929,7 +980,8 @@ public class LoginWindow {
 	protected boolean comprobarPassword() {
 		try {
 			JPasswordField pwd = new JPasswordField();
-			int action = JOptionPane.showConfirmDialog(panelSettings, pwd,"Enter password:", JOptionPane.OK_CANCEL_OPTION);
+			int action = JOptionPane.showConfirmDialog(panelSettings, pwd,
+					"Enter password:", JOptionPane.OK_CANCEL_OPTION);
 			
 			String paswd = new String(pwd.getPassword());
 			
@@ -1023,7 +1075,8 @@ public class LoginWindow {
 					break;
 			}
 		} else {
-			JOptionPane.showMessageDialog(frmFilenimbus, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(frmFilenimbus, "Nothing is selected!", 
+					"Table files", JOptionPane.WARNING_MESSAGE);
 		}
 	}
 
