@@ -635,7 +635,11 @@ public class LoginWindow {
 					String pwd1 = new String(passRegister1.getPassword());
 					String pwd2 = new String(passRegister2.getPassword());
 	
-					if(pwd1.equals(pwd2)){
+					if (userName.equals("") || pwd1.equals("") || pwd2.equals("")) {
+						throw new Excepciones("Any empty fields");
+					}
+					
+					if (pwd1.equals(pwd2)){
 						// Call the register method
 						try{
 							if(mainClient.signUp(userName, pwd1)){
