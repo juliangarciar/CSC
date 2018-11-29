@@ -228,7 +228,7 @@ public class ClientController extends Thread{
 		 }
 		 secureSend("111");
 		 
-		 String newuser =(String) secureReceive();
+		 String newuser = secureReceive().toString();
 		 byte[] pwdh = (byte[]) secureReceive();
 		 
 		 gestor.conectarBD(); // conectamos con la BD
@@ -236,6 +236,7 @@ public class ClientController extends Thread{
 		 if(rs.first()) {
 			 secureSend("E111");//USUARIO YA REGISTRADO
 			 rs.close();
+			 gestor.close();
 			 return;
 		 }
 		 else {
@@ -248,7 +249,7 @@ public class ClientController extends Thread{
 		 rs = gestor.insertarUser(newuser, pwdh, priv, pub);
 	     if(rs.first())
 	     {
-	         userID = rs.getInt(1);
+	         //userID = rs.getInt(1);
 	         secureSend("113");
 	         System.out.println(kClient + ": Signin id:" +userID+ " username:" + newuser);
 	     }else {
@@ -445,13 +446,15 @@ public class ClientController extends Thread{
 		 else {
 			 secureSend("711");
 		 }
+		 System.out.println("Todo OK");
 		 
 		 byte[] actual = (byte[]) secureReceive();
 		 byte[] nueva = (byte[]) secureReceive();
+		 byte[] pub = (byte[]) secureReceive();
 		 byte[] priv = (byte[]) secureReceive();
 		 
 		 gestor.conectarBD(); // conectamos con la BD
-		 int numCambios = gestor.cambiarPassword(userID, nueva, priv, actual);
+		 int numCambios = gestor.cambiarPassword(userID, nueva, priv, pub, actual);
 		 gestor.close();
 		 
 		 if(numCambios < 1) {
@@ -463,31 +466,37 @@ public class ClientController extends Thread{
 		 } 
 	 }
 	 
-	 public void changeUser() throws Exception{
+	 public void changeUser() throws Exception {
 		 if(userID==Integer.MAX_VALUE) {
 			 secureSend("E721");
 		 }else {
 			 secureSend("721");
 		 }
 		 
-		 String name = (String) secureReceive();
+		 String oldName = secureReceive().toString();
+		 String newName = secureReceive().toString();
 		 
 		 gestor.conectarBD(); // conectamos con la BD
-		 ResultSet rs = gestor.ejecutarQuery("SELECT id FROM user WHERE user.user='"+name+"'");
-		 if(rs.first()) {
+		 ResultSet rs = gestor.ejecutarQuery("SELECT id FROM user WHERE user.user='"+oldName+"'");
+		 if (rs.first()) {
+			 
+			 int numCambios = gestor.cambiarUser(userID, newName);
+			 if (numCambios==1) {
+				 secureSend("722"); // Cambio bien hecho
+				 rs.close();
+				 gestor.close();
+			 }
+			 else {
+				 secureSend("723");
+				 rs.close();
+				 gestor.close();
+				 return;
+			 }
+		 } else {
 			 secureSend("E722");
+			 rs.close();
+			 gestor.close();
 			 return;
-		 }
-		 rs.close();
-		 
-		 int numCambios = gestor.cambiarUser(userID, name);
-		 gestor.close();
-		 
-		 if(numCambios==1) {
-			 secureSend("722");
-		 }
-		 else {
-			 secureSend("723");
 		 }
 	 }
 	 

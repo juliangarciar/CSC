@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 import javax.swing.Box;
@@ -30,8 +32,6 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 public class LoginWindow {
 	java.io.File chosenFile;
@@ -461,6 +461,7 @@ public class LoginWindow {
 				
 				userPanel.setVisible(false);
 				panelSettings.setVisible(true);
+				lblOldname.setText(mainClient.getUserName());
 			}
 		});
 		menu.add(mntmSettings);
@@ -622,38 +623,38 @@ public class LoginWindow {
 				signUpPanel.setVisible(false);
 				loginPanel.setVisible(true);
 				//frmFilenimbus.setContentPane(loginPanel);
+				limpiarCamposSingIn();
 			}
 		});
 		
 		// Confirm new signup button
 		btnRegisterConfirm.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String userName = userRegister.getText();
-				char[] pwd1 = passRegister1.getPassword();
-				char[] pwd2 = passRegister2.getPassword();
-				String tmp1 = "";
-				String tmp2 = "";
-				for(int i = 0; i < pwd1.length; i++){
-					tmp1 += pwd1[i];
-					tmp2 += pwd2[i];
-				}
-				if(tmp1.equals(tmp2)){
-					// Call the register method
-					try{
-						if(mainClient.signUp(userName, tmp1)){
-							statLabel.setText("Account created succesfully.");
-							signUpPanel.setVisible(false);
-							loginPanel.setVisible(true);
-							//frmFilenimbus.setContentPane(loginPanel);
+				try {
+					String userName = userRegister.getText();
+					String pwd1 = new String(passRegister1.getPassword());
+					String pwd2 = new String(passRegister2.getPassword());
+	
+					if(pwd1.equals(pwd2)){
+						// Call the register method
+						try{
+							if(mainClient.signUp(userName, pwd1)){
+								statLabel.setText("Account created succesfully.");
+								signUpPanel.setVisible(false);
+								loginPanel.setVisible(true);
+								limpiarCamposSingIn();
+							}
+						}
+						catch(Exception a){
+							throw new Excepciones("Error when trying to sign up.");
 						}
 					}
-					catch(Exception a){
-						statLabel.setText("Error when trying to sign up.");
+					else {
+						throw new Excepciones("Passwords doesn't match");
 					}
-				}
-				else{
-					statLabel.setText("Passwords doesn't match.");
-					//statLabel.setText(tmp1);
+				} catch(Excepciones ex) {
+					MensajeError(ex.exErrorPersonalizado());
+					return;
 				}
 			}
 		});
@@ -681,6 +682,7 @@ public class LoginWindow {
 					limpiarCamposSettings();
 					userPanel.setVisible(true);
 					panelSettings.setVisible(false);
+					lblUser.setText(mainClient.getUserName());
 				}
 			});
 			GroupLayout gl_panelSettings = new GroupLayout(panelSettings);
@@ -791,7 +793,7 @@ public class LoginWindow {
 			
 			JLabel lblName = new JLabel("Name:");
 			
-			lblOldname = new JLabel("");
+			lblOldname = new JLabel(mainClient.getUserName());
 			
 			JLabel lblNewName = new JLabel("New name:");
 			GroupLayout gl_panel_ch_user = new GroupLayout(panel_ch_user);
@@ -844,7 +846,18 @@ public class LoginWindow {
 			btnRegister.setEnabled(false);
 		}
 	}
-
+	
+	protected void limpiarCamposLogin() {
+		 userField.setText("");
+		 passField.setText("");
+	}
+	
+	protected void limpiarCamposSingIn() {
+		userRegister.setText("");
+		passRegister1.setText("");
+		passRegister2.setText("");
+	}
+	
 	protected void limpiarCamposSettings() {
 		lblOldname.setText("");
 		txtNewuser.setText("");
@@ -853,35 +866,74 @@ public class LoginWindow {
 	}
 	
 	protected void changeUser() {
-		// TODO hacer comprobaciones
-		
-		comprobarPassword();
-		
+		try {
+			if (comprobarPassword()) {
+				String newName = txtNewuser.getText();
+				
+				// Campo vacio
+				if (newName.equals("")) {
+					throw new Excepciones("Empty user name");
+					
+				} else {
+					mainClient.cambiarUser(newName);
+					limpiarCamposSettings();
+					lblOldname.setText(newName);
+				}
+			}
+		} catch(Excepciones ex) {
+			MensajeError(ex.exErrorPersonalizado());
+			return;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return;
+		}
 	}
 
 	protected void changePassword() {
-		// TODO hacer comprobaciones
-		
-		comprobarPassword();
-		
+		// TODO hacer comprobacion de longitud
+		try {
+			if (comprobarPassword()) {
+				String newPWD = txtNewpassword.getText();
+				String rePWD = txtRepeatpassword.getText();
+				
+				// Campos vacios
+				if (newPWD.equals("")) {
+					throw new Excepciones("Empty password");
+				} else if (rePWD.equals("")) {
+					throw new Excepciones("Empty repeat password");
+				}
+				
+				// Campos iguales
+				if (newPWD.equals(rePWD)) {
+					mainClient.cambiarPassword(newPWD);
+					limpiarCamposSettings();
+				} else {
+					throw new Excepciones("Passwords don't match");
+				}
+				
+			}
+		} catch(Excepciones ex) {
+			MensajeError(ex.exErrorPersonalizado());
+			return;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return;
+		}
 	}
 	
 	protected boolean comprobarPassword() {
 		try {
 			JPasswordField pwd = new JPasswordField();
 			int action = JOptionPane.showConfirmDialog(panelSettings, pwd,"Enter password:", JOptionPane.OK_CANCEL_OPTION);
+			
 			String paswd = new String(pwd.getPassword());
 			
 			// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
 			if(action == 0) {
 				if ( (!paswd.equals(null)) && (!paswd.equals("")) ) {
-					System.out.println("Cosaa");
-					
 					if (mainClient.comprobarUserPassword(paswd)) {
-						System.out.println("Password correcta");
 						return true;
 					}
-					System.out.println("Password incorrecta");
 				} else {
 					throw new Excepciones("Empty password");
 				}
@@ -1038,13 +1090,14 @@ public class LoginWindow {
     		String userName = userField.getText();
 			String pwd = new String(passField.getPassword());
 			
-			// Call connect method
+			// Comprobar campos vacios
 			if (userName.equals("")) {
 				throw new Excepciones("Empty user");
 			} else if (pwd.equals("")) {
 				throw new Excepciones("Empty password");
 			}
 			
+			// Call connect method
 			if(mainClient.login(userName, pwd)){
 				statLabel.setText("Conectado.");
 				loginPanel.setVisible(false);
@@ -1054,6 +1107,7 @@ public class LoginWindow {
 				// Cargar los archivos del usuario en la tabla
 				cargarDatosTabla();
 				lblUser.setText(userName);
+				limpiarCamposLogin();
 			}
 		}
 		catch(Excepciones ex) {

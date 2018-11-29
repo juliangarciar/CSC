@@ -12,6 +12,7 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.KeySpec;
@@ -183,53 +184,24 @@ public class Client{
     public boolean signUp(String user, String pass) throws Exception {
         boolean signinResponse = false;
         secureSend(SIGNIT);
-        println("Debug-2");
-        Object r = secureReceive();
-        println("Debug-1");
-    	if(r.getClass().equals(String.class) && r.equals("E100")) {
+        
+        String datos = secureReceive().toString();
+    	if(datos.equals("E100")) {
     		println("You have already login");
     	}
     	else{
             username = user;
-            pwd = pass;
-            
-            //Hashear la pass
-            MessageDigest md = MessageDigest.getInstance("SHA-512");
-            byte[] pwdHash = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
-            
             secureSend(username);
-            secureSend(pwdHash);
+            secureSend(obtenerHash(pass)); // mandar el hash de la password
             
-            println("Debug0");
-
-            r = secureReceive();
-            if(r.getClass().equals(String.class) && r.equals("E111")) {
+            datos = secureReceive().toString();
+            if(datos.equals("E111")) {
                 println("User name already registered");
+                return false;
             }
-            else{
-                println("Debug1");
-                //Crear un par de claves
-                KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-                keyPairGenerator.initialize(2048);
-                userKP = keyPairGenerator.genKeyPair();
-                
-                
-                //Crear AES KEY desde pwd
-                SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-                KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
-                SecretKey tmp = factory.generateSecret(spec);
-                SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-                
-                //Encriptamos
-                Cipher c = Cipher.getInstance("AES");
-                c.init(Cipher.ENCRYPT_MODE, secret);
-                byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());		
-                
-                println("Debug2");
-                
-                //Enviamos las claves
-                secureSend(userKP.getPublic().getEncoded());
-                secureSend(encrypted);
+            else {
+                // Crea las claves y se las manda al server
+                crearClavesPubPriv(pass);
                 
                 if(secureReceive().equals("113")) {
                     println("Created user: " + username);
@@ -430,6 +402,43 @@ public class Client{
          }
          else{println("Unknown error");}
     }
+    
+    public void cambiarUser(String name) throws Exception {
+    	secureSend(CHANGE_USER);
+    	String datos = secureReceive().toString();
+    	
+    	if (datos.equals("721")) {
+    		secureSend(getUserName()); 	// Old
+    		secureSend(name); 			// New
+    		
+			datos = secureReceive().toString();
+			if (datos.equals("722")) {
+				username = name;
+				println("Name OK");
+			} else {
+				println("Error cambiando nombre");
+			}
+		}
+    }
+    
+	public void cambiarPassword(String pass) throws Exception {
+		
+		secureSend(CHANGE_PASS);
+		String datos = secureReceive().toString();
+		
+		if (datos.equals("711")) {
+			secureSend(obtenerHash(pwd)); // Mandamos la antigua
+			secureSend(obtenerHash(pass)); // mandar el hash de la nueva
+			crearClavesPubPriv(pass); // Crea nuevas claves y se las manda al server
+			
+			datos = secureReceive().toString();
+			if (datos.equals("712")) {
+				println("Todo OK");
+			} else {
+				println("Error generando claves");
+			}
+		}
+	}
 
     // Se llama desde el panel de settings para comprobar si la contrasenya es correcta
     public boolean comprobarUserPassword(String pass) throws Exception {
@@ -452,14 +461,9 @@ public class Client{
             	username = user; 				// se asigna 1 vez
             }
     	}
-		// Hash
-		MessageDigest messageDig = MessageDigest.getInstance("SHA-512");
-		
-		//Aqui se puede poner una sal para anadir seguridad, 
-		byte[] pwdHash = messageDig.digest(pass.getBytes(StandardCharsets.UTF_8));
 
 		secureSend(username);
-        secureSend(pwdHash);
+        secureSend(obtenerHash(pass)); // mandar el hash de la password
         
         datos = secureReceive().toString();
 		if(datos.equals("E102")) {
@@ -483,6 +487,43 @@ public class Client{
             }
         }
     	return false;
+    }
+    
+    // Hash
+    private byte[] obtenerHash(String pass) throws NoSuchAlgorithmException {
+		MessageDigest messageDig = MessageDigest.getInstance("SHA-512");
+		
+		//Aqui se puede poner una sal para anadir seguridad, 
+		return messageDig.digest(pass.getBytes(StandardCharsets.UTF_8));
+    }
+    
+    // Claves publica y privada
+    private void crearClavesPubPriv(String pass) throws Exception {
+    	//Crear un par de claves
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        userKP = keyPairGenerator.genKeyPair();
+        
+        //Crear AES KEY desde pass
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        KeySpec spec = new PBEKeySpec(pass.toCharArray(), pass.getBytes(), 65536, 256);
+        SecretKey tmp = factory.generateSecret(spec);
+        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+        
+        //Encriptamos
+        Cipher c = Cipher.getInstance("AES");
+        c.init(Cipher.ENCRYPT_MODE, secret);
+        byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());		
+        
+        //Enviamos las claves
+        secureSend(userKP.getPublic().getEncoded());
+        secureSend(encrypted);
+        
+        pwd = pass;
+    }
+    
+    public String getUserName() {
+    	return username;
     }
     
     // Sends data with security checks
