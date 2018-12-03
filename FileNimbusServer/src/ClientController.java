@@ -446,15 +446,13 @@ public class ClientController extends Thread{
 		 else {
 			 secureSend("711");
 		 }
-		 System.out.println("Todo OK");
 		 
 		 byte[] actual = (byte[]) secureReceive();
 		 byte[] nueva = (byte[]) secureReceive();
-		 byte[] pub = (byte[]) secureReceive();
 		 byte[] priv = (byte[]) secureReceive();
 		 
 		 gestor.conectarBD(); // conectamos con la BD
-		 int numCambios = gestor.cambiarPassword(userID, nueva, priv, pub, actual);
+		 int numCambios = gestor.cambiarPassword(userID, nueva, priv, actual);
 		 gestor.close();
 		 
 		 if(numCambios < 1) {
@@ -472,14 +470,20 @@ public class ClientController extends Thread{
 		 }else {
 			 secureSend("721");
 		 }
-		 
-		 String oldName = secureReceive().toString();
 		 String newName = secureReceive().toString();
 		 
 		 gestor.conectarBD(); // conectamos con la BD
-		 ResultSet rs = gestor.ejecutarQuery("SELECT id FROM user WHERE user.user='"+oldName+"'");
-		 if (rs.first()) {
+		 ResultSet rs = gestor.ejecutarQuery("SELECT id FROM user WHERE user.user='"+newName+"'");
+		 
+		 // Existe ya ese nombre
+		 if (rs.next()) {
+			 secureSend("E722");
+			 rs.close();
+			 gestor.close();
+			 return;
 			 
+		// No existe ese nombre
+		 } else {
 			 int numCambios = gestor.cambiarUser(userID, newName);
 			 if (numCambios==1) {
 				 secureSend("722"); // Cambio bien hecho
@@ -492,11 +496,6 @@ public class ClientController extends Thread{
 				 gestor.close();
 				 return;
 			 }
-		 } else {
-			 secureSend("E722");
-			 rs.close();
-			 gestor.close();
-			 return;
 		 }
 	 }
 	 

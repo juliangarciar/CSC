@@ -187,7 +187,7 @@ public class Client{
         
         String datos = secureReceive().toString();
     	if(datos.equals("E100")) {
-    		println("You have already login");
+    		throw new Excepciones("You have already login");
     	}
     	else{
             username = user;
@@ -196,12 +196,11 @@ public class Client{
             
             datos = secureReceive().toString();
             if(datos.equals("E111")) {
-                println("User name already registered");
-                return false;
+                throw new Excepciones("User name already registered");
             }
             else {
                 // Crea las claves y se las manda al server
-                crearClavesPubPriv(pass);
+                crearClavesPubPriv(pass, SIGNIT);
                 
                 if(secureReceive().equals("113")) {
                     println("Created user: " + username);
@@ -403,41 +402,50 @@ public class Client{
          else{println("Unknown error");}
     }
     
-    public void cambiarUser(String name) throws Exception {
+    public boolean cambiarUser(String newName) throws Exception {
+    	boolean userNameCambiado = false;
     	secureSend(CHANGE_USER);
     	String datos = secureReceive().toString();
     	
     	if (datos.equals("721")) {
-    		secureSend(getUserName()); 	// Old
-    		secureSend(name); 			// New
+    		secureSend(newName); 		// New name
     		
 			datos = secureReceive().toString();
 			if (datos.equals("722")) {
-				username = name;
-				println("Name OK");
+				username = newName;
+				userNameCambiado = true;
+			} else if (datos.equals("E722")) {
+				throw new Excepciones("Name already used");
 			} else {
-				println("Error cambiando nombre");
+				throw new Excepciones("Error changing the username");
 			}
 		}
+    	return userNameCambiado;
     }
     
-	public void cambiarPassword(String pass) throws Exception {
-		
+	public boolean cambiarPassword(String pass) throws Exception {
+		boolean passCambiada = false;
 		secureSend(CHANGE_PASS);
 		String datos = secureReceive().toString();
 		
 		if (datos.equals("711")) {
 			secureSend(obtenerHash(pwd)); // Mandamos la antigua
 			secureSend(obtenerHash(pass)); // mandar el hash de la nueva
-			crearClavesPubPriv(pass); // Crea nuevas claves y se las manda al server
+			crearClavesPubPriv(pass, CHANGE_PASS); // Crea nuevas claves y se las manda al server
 			
 			datos = secureReceive().toString();
-			if (datos.equals("712")) {
-				println("Todo OK");
+			if (datos.equals("E712")) {
+				throw new Excepciones("Incorrect old password");
+			} else if(datos.equals("E713")) {
+				throw new Excepciones("Unknown error");
 			} else {
-				println("Error generando claves");
+				pwd = pass;
+				passCambiada = true;
 			}
+		} else {
+			throw new Excepciones("Synchronization error");
 		}
+		return passCambiada;
 	}
 
     // Se llama desde el panel de settings para comprobar si la contrasenya es correcta
@@ -478,8 +486,13 @@ public class Client{
 			if (datos.equals("E103")) {
 				
                 //pwd = null;
-             // Pasamos la excepcion a la interfaz
-				throw new Excepciones("Incorrect password");
+				// Pasamos la excepcion a la interfaz
+				if (codigo.equals(LOGIN)) {
+					throw new Excepciones("Incorrect password");
+				} else {
+					// Para Settings
+					throw new Excepciones("Incorrect old password");
+				}
 				
 			} else if (datos.equals("103")) { // Password correcto
 				pwd = pass;
@@ -498,12 +511,15 @@ public class Client{
     }
     
     // Claves publica y privada
-    private void crearClavesPubPriv(String pass) throws Exception {
+    private void crearClavesPubPriv(String pass, String codigo) throws Exception {
     	//Crear un par de claves
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        userKP = keyPairGenerator.genKeyPair();
-        
+    	// Solo se crea cuando registramos un usuario
+    	if (codigo.equals(SIGNIT)) {
+	        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+	        keyPairGenerator.initialize(2048);
+	        userKP = keyPairGenerator.genKeyPair();
+    	}
+    	
         //Crear AES KEY desde pass
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         KeySpec spec = new PBEKeySpec(pass.toCharArray(), pass.getBytes(), 65536, 256);
@@ -516,10 +532,10 @@ public class Client{
         byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());		
         
         //Enviamos las claves
-        secureSend(userKP.getPublic().getEncoded());
+        if (codigo.equals(SIGNIT)) { // Solo se envia esta cuando registramos un usuario
+        	secureSend(userKP.getPublic().getEncoded());
+        }
         secureSend(encrypted);
-        
-        pwd = pass;
     }
     
     public String getUserName() {

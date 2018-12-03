@@ -59,17 +59,15 @@ public class GestorBD {
 		return sqlSentence.executeUpdate(sql);
 	}
 	
-	public int cambiarPassword(int userID, byte[] nueva, byte[] priv, byte[] pub, byte[] actual) throws SQLException {
+	public int cambiarPassword(int userID, byte[] nueva, byte[] priv, byte[] actual) throws SQLException {
 		preparedSentence = sqlConnection.prepareStatement("UPDATE user SET "
 		 		+ "pwd = ?, "
-		 		+ "private = ?, "
-		 		+ "public = ? "
+		 		+ "private = ? "
 		 		+ "WHERE id = "+userID
 		 		+ " AND pwd = ?");
 		preparedSentence.setBytes(1, nueva);
 		preparedSentence.setBytes(2, priv);
-		preparedSentence.setBytes(3, pub);
-		preparedSentence.setBytes(4, actual);
+		preparedSentence.setBytes(3, actual);
 		
 		return preparedSentence.executeUpdate();
 	}

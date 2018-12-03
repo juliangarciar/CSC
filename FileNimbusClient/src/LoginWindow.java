@@ -83,9 +83,8 @@ public class LoginWindow {
 		frmFilenimbus.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent e) {
-				JOptionPane.showMessageDialog(frmFilenimbus, "We will miss you.",
-						"FileNimbus", JOptionPane.INFORMATION_MESSAGE);
-				try{
+				try {
+					MensajeInfo("FileNimbus", "We will miss you.");
 					mainClient.logout();
 					mainClient.close();
 				}
@@ -125,6 +124,14 @@ public class LoginWindow {
 		userLabel.setAlignmentX(0.5f);
 		
 		userField = new JTextField();
+		userField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent key) {
+				if (key.getKeyCode() == KeyEvent.VK_ENTER) {
+					login();
+				}
+			}
+		});
 		userField.setFont(new Font("Arial", Font.PLAIN, 15));
 		loginBox.add(userField);
 		userField.setColumns(20);
@@ -366,7 +373,7 @@ public class LoginWindow {
 				// TODO implementar
 				
 				String shareUser = JOptionPane.showInputDialog( userPanel,
-						"Enter the username to share:", JOptionPane.INFORMATION_MESSAGE);
+						"Enter the username to share:", "Share", JOptionPane.INFORMATION_MESSAGE);
 				
 				// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
 				//if(action == 0) {
@@ -627,6 +634,7 @@ public class LoginWindow {
 				signUpPanel.setVisible(true);
 				loginPanel.setVisible(false);
 				//frmFilenimbus.setContentPane(signUpPanel);
+				limpiarCamposLogin();
 			}
 		});
 
@@ -666,7 +674,7 @@ public class LoginWindow {
 					
 					if (pwd1.equals(pwd2)){
 						// Call the register method
-						try{
+						try {
 							if(mainClient.signUp(userName, pwd1)){
 								statLabel.setText("Account created succesfully.");
 								signUpPanel.setVisible(false);
@@ -674,7 +682,10 @@ public class LoginWindow {
 								limpiarCamposSingIn();
 							}
 						}
-						catch(Exception a) {
+						catch (Excepciones ex) {
+							MensajeError(ex.exErrorPersonalizado());
+						}
+						catch (Exception a) {
 							throw new Excepciones("Error when trying to sign up.");
 						}
 					}
@@ -918,21 +929,23 @@ public class LoginWindow {
 	
 	protected void changeUser() {
 		try {
+			String newName = txtNewuser.getText();
+			
+			// Campo vacio
+			if (newName.equals("")) {
+				throw new Excepciones("Empty user name");
+			}
+			
+			// Comprobar longitud del campo
+			comprobarLongUser(newName);
+			
 			if (comprobarPassword()) {
-				String newName = txtNewuser.getText();
-				
-				// Campo vacio
-				if (newName.equals("")) {
-					throw new Excepciones("Empty user name");
-				}
-				// Comprobar longitud del campo
-				comprobarLongUser(newName);
-				
 				// Cambiar nombre de usuario
-				mainClient.cambiarUser(newName);
-				limpiarCamposSettings();
-				lblOldname.setText(newName);
-				
+				if (mainClient.cambiarUser(newName)) {
+					MensajeInfo("Name changed successfully!");
+					limpiarCamposSettings();
+					lblOldname.setText(newName);
+				}
 			}
 		} catch(Excepciones ex) {
 			MensajeError(ex.exErrorPersonalizado());
@@ -945,28 +958,30 @@ public class LoginWindow {
 
 	protected void changePassword() {
 		try {
-			if (comprobarPassword()) {
-				String newPWD = new String(passNewpassword.getPassword());
-				String rePWD = new String(passRepeatpassword.getPassword());
-				
-				// Campos vacios
-				if (newPWD.equals("")) {
-					throw new Excepciones("Empty password");
-				} else if (rePWD.equals("")) {
-					throw new Excepciones("Empty repeat password");
+			String newPWD = new String(passNewpassword.getPassword());
+			String rePWD = new String(passRepeatpassword.getPassword());
+			
+			// Campos vacios
+			if (newPWD.equals("")) {
+				throw new Excepciones("Empty password");
+			} else if (rePWD.equals("")) {
+				throw new Excepciones("Empty repeat password");
+			}
+			
+			// Comprobar longitud del campo
+			comprobarLongPass(newPWD);
+			
+			// Campos iguales
+			if (newPWD.equals(rePWD)) {
+				if (comprobarPassword()) {
+					if (mainClient.cambiarPassword(newPWD)) {
+						MensajeInfo("Password changed successfully!");
+						limpiarCamposSettings();
+						lblOldname.setText(mainClient.getUserName());
+					}
 				}
-				
-				// Comprobar longitud del campo
-				comprobarLongPass(newPWD);
-				
-				// Campos iguales
-				if (newPWD.equals(rePWD)) {
-					mainClient.cambiarPassword(newPWD);
-					limpiarCamposSettings();
-					lblOldname.setText(mainClient.getUserName());
-				} else {
-					throw new Excepciones("Passwords don't match");
-				}
+			} else {
+				throw new Excepciones("Passwords don't match");
 			}
 		} catch(Excepciones ex) {
 			MensajeError(ex.exErrorPersonalizado());
@@ -1055,7 +1070,7 @@ public class LoginWindow {
 						
 						// TODO comprobar que funcione de verdad
 						if (directoryChooser.getSelectedFile().canWrite()) {
-							System.out.println("escribir");
+							System.out.println("Puedo acceder y escribir en el directorio");
 							
 							for (int id=0; id<idFicheros.size(); id++) {
 								try {
@@ -1065,7 +1080,7 @@ public class LoginWindow {
 								}
 							}
 						} else {
-							System.out.println("No puedo escribir");
+							System.out.println("No puedo acceder ni escribir en el directorio");
 						}
 					}
 					break;
@@ -1138,7 +1153,15 @@ public class LoginWindow {
 		return frmFilenimbus;
 	}
 	
-	// Para tener una alerta de errores general con el mismo formato
+	// Para tener alertas de informacion general con el mismo formato
+    private void MensajeInfo(String mensaje) {
+    	MensajeInfo("Info", mensaje);
+    }
+    private void MensajeInfo(String titulo, String mensaje) {
+    	JOptionPane.showMessageDialog(frmFilenimbus, mensaje, titulo, JOptionPane.INFORMATION_MESSAGE);
+	}
+    
+ // Para tener una alerta de errores general con el mismo formato
     private void MensajeError(String mensaje) {
     	JOptionPane.showMessageDialog(frmFilenimbus, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
 	}
