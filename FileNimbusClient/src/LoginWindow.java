@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 import javax.swing.Box;
@@ -33,16 +35,13 @@ import javax.swing.table.DefaultTableModel;
 
 public class LoginWindow {
 	java.io.File chosenFile;
-	JPanel loginPanel;	
-	JPanel signUpPanel;
-	JPanel userPanel;
-
 	JFrame frmFilenimbus;
-	JTextField userField;
-	JPasswordField passField;
-	JTextField userRegister;
-	JPasswordField passRegister1;
-	JPasswordField passRegister2;
+	JPanel loginPanel, signUpPanel, userPanel, panelSettings;
+
+	JLabel statLabel, lblUser, lblOldname;
+	JTextField userField, userRegister, txtNewuser;
+	JPasswordField passField, passRegister1, passRegister2, passNewpassword, passRepeatpassword;
+	
 	JTable table;
 	DefaultTableModel model;
 
@@ -84,8 +83,8 @@ public class LoginWindow {
 		frmFilenimbus.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent e) {
-				JOptionPane.showMessageDialog(frmFilenimbus, "We will miss you.", "FileNimbus", JOptionPane.INFORMATION_MESSAGE);
-				try{
+				try {
+					MensajeInfo("FileNimbus", "We will miss you.");
 					mainClient.logout();
 					mainClient.close();
 				}
@@ -110,7 +109,7 @@ public class LoginWindow {
 		loginBox.setBorder(null);
 		loginPanel.add(loginBox);
 		
-		JLabel statLabel = new JLabel("Welcome");
+		statLabel = new JLabel("Welcome");
 		statLabel.setFont(new Font("Arial", Font.BOLD, 16));
 		statLabel.setAlignmentX(0.5f);
 		loginBox.add(statLabel);
@@ -125,6 +124,14 @@ public class LoginWindow {
 		userLabel.setAlignmentX(0.5f);
 		
 		userField = new JTextField();
+		userField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent key) {
+				if (key.getKeyCode() == KeyEvent.VK_ENTER) {
+					login();
+				}
+			}
+		});
 		userField.setFont(new Font("Arial", Font.PLAIN, 15));
 		loginBox.add(userField);
 		userField.setColumns(20);
@@ -139,6 +146,14 @@ public class LoginWindow {
 		passLabel.setAlignmentX(0.5f);
 		
 		passField = new JPasswordField();
+		passField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent key) {
+				if (key.getKeyCode() == KeyEvent.VK_ENTER) {
+					login();
+				}
+			}
+		});
 		passField.setFont(new Font("Arial", Font.PLAIN, 15));
 		passField.setColumns(20);
 		loginBox.add(passField);
@@ -356,6 +371,12 @@ public class LoginWindow {
 		btnShare.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO implementar
+				
+				String shareUser = JOptionPane.showInputDialog( userPanel,
+						"Enter the username to share:", "Share", JOptionPane.INFORMATION_MESSAGE);
+				
+				// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
+				//if(action == 0) {
 			}
 		});
 		
@@ -449,10 +470,19 @@ public class LoginWindow {
 		JMenuItem mntmSettings = new JMenuItem("Settings");
 		mntmSettings.setHorizontalAlignment(SwingConstants.LEFT);
 		mntmSettings.setBackground(new Color(135, 206, 235));
+		mntmSettings.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				userPanel.setVisible(false);
+				panelSettings.setVisible(true);
+				lblOldname.setText(mainClient.getUserName());
+			}
+		});
 		menu.add(mntmSettings);
 		
 		JMenuItem mntmLogout = new JMenuItem("Logout");
 		mntmLogout.setHorizontalAlignment(SwingConstants.LEFT);
+		mntmLogout.setBackground(new Color(135, 206, 235));
 		mntmLogout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
@@ -460,16 +490,15 @@ public class LoginWindow {
 					mainClient.logout();
 				}
 				catch(Exception o){
-					// TODO Implement logout exception catch
+					System.out.println(o.getMessage());
 				}
 				loginPanel.setVisible(true);
 				userPanel.setVisible(false);
 			}
 		});
-		mntmLogout.setBackground(new Color(135, 206, 235));
 		menu.add(mntmLogout);
 		
-		JLabel lblUser = new JLabel("User");
+		lblUser = new JLabel("User");
 		lblUser.setForeground(Color.WHITE);
 		lblUser.setFont(new Font("Tahoma", Font.BOLD, 11));
 		
@@ -555,23 +584,36 @@ public class LoginWindow {
 		// File upload button
 		btnUploadFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(chosenFile.exists()){
-					try{
-						mainClient.upload(chosenFile);
-						fileName.setText(NO_FILE_SELECTED);
-						
-						// Actualizamos la tabla de archivos
-						cargarDatosTabla();
+				try {
+					if (chosenFile == null) {
+						throw new Excepciones("File not selected");
 					}
-					catch(Exception u){
-						System.out.println("File could not be uploaded.");
+					
+					if (chosenFile.exists()) {
+						try {
+							mainClient.upload(chosenFile);
+							fileName.setText(NO_FILE_SELECTED);
+							chosenFile = null;
+							
+							// Actualizamos la tabla de archivos
+							cargarDatosTabla();
+						}
+						catch(Exception u) {
+							System.out.println("File could not be uploaded");
+						}
 					}
-				}
-				else{
-					System.out.println("File not selected.");
-				}
+					else {
+						throw new Excepciones("File not exist");
+					}
+			} catch(Excepciones ex) {
+				MensajeError(ex.exErrorPersonalizado());
+				return;
+			} catch (Exception ex) {
+				System.out.println(ex.getMessage());
+				return;
 			}
-		});
+		}
+	});
 		
 		// File select button
 		btnSelectFile.addActionListener(new ActionListener() {
@@ -592,40 +634,14 @@ public class LoginWindow {
 				signUpPanel.setVisible(true);
 				loginPanel.setVisible(false);
 				//frmFilenimbus.setContentPane(signUpPanel);
+				limpiarCamposLogin();
 			}
 		});
 
 		// Login button
 		btnLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				String userName = userField.getText();
-				char[] pwd = passField.getPassword();
-				String tmp = "";
-				for(int i = 0; i < pwd.length; i++){
-					tmp += pwd[i];
-				}
-				// Call connect method
-				try{
-					if(mainClient.login(userName, tmp)){
-						statLabel.setText("Conectado.");
-						loginPanel.setVisible(false);
-						userPanel.setVisible(true);
-						//frmFilenimbus.setContentPane(userPanel);
-						
-						// Cargar los archivos del usuario en la tabla
-						cargarDatosTabla();
-						lblUser.setText(userName);
-					}
-				}
-				catch(Excepciones ex) {
-					MensajeError(ex.exErrorPersonalizado());
-				}
-				catch(Exception ex) {
-					statLabel.setText(ex.getMessage());
-				}
-				finally{
-					//statLabel.setText(tmp);
-				}
+				login();
 			}
 		});
 
@@ -635,38 +651,50 @@ public class LoginWindow {
 				signUpPanel.setVisible(false);
 				loginPanel.setVisible(true);
 				//frmFilenimbus.setContentPane(loginPanel);
+				limpiarCamposSingIn();
 			}
 		});
+		
 		
 		// Confirm new signup button
 		btnRegisterConfirm.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String userName = userRegister.getText();
-				char[] pwd1 = passRegister1.getPassword();
-				char[] pwd2 = passRegister2.getPassword();
-				String tmp1 = "";
-				String tmp2 = "";
-				for(int i = 0; i < pwd1.length; i++){
-					tmp1 += pwd1[i];
-					tmp2 += pwd2[i];
-				}
-				if(tmp1.equals(tmp2)){
-					// Call the register method
-					try{
-						if(mainClient.signUp(userName, tmp1)){
-							statLabel.setText("Account created succesfully.");
-							signUpPanel.setVisible(false);
-							loginPanel.setVisible(true);
-							//frmFilenimbus.setContentPane(loginPanel);
+				try {
+					String userName = userRegister.getText();
+					String pwd1 = new String(passRegister1.getPassword());
+					String pwd2 = new String(passRegister2.getPassword());
+	
+					if (userName.equals("") || pwd1.equals("") || pwd2.equals("")) {
+						throw new Excepciones("Some field is empty");
+					}
+					
+					// Comprobar longitudes de los campos
+					comprobarLongUser(userName);
+					comprobarLongPass(pwd1);
+					
+					if (pwd1.equals(pwd2)){
+						// Call the register method
+						try {
+							if(mainClient.signUp(userName, pwd1)){
+								statLabel.setText("Account created succesfully.");
+								signUpPanel.setVisible(false);
+								loginPanel.setVisible(true);
+								limpiarCamposSingIn();
+							}
+						}
+						catch (Excepciones ex) {
+							MensajeError(ex.exErrorPersonalizado());
+						}
+						catch (Exception a) {
+							throw new Excepciones("Error when trying to sign up.");
 						}
 					}
-					catch(Exception a){
-						statLabel.setText("Error when trying to sign up.");
+					else {
+						throw new Excepciones("Passwords doesn't match");
 					}
-				}
-				else{
-					statLabel.setText("Passwords doesn't match.");
-					//statLabel.setText(tmp1);
+				} catch(Excepciones ex) {
+					MensajeError(ex.exErrorPersonalizado());
+					return;
 				}
 			}
 		});
@@ -676,6 +704,181 @@ public class LoginWindow {
 		try{
 			mainClient.initializeClient();
 			statLabel.setText("Server connected.");
+			
+			panelSettings = new JPanel();
+			panelSettings.setBackground(new Color(30, 144, 255));
+			frmFilenimbus.getContentPane().add(panelSettings, "name_417711051764357");
+			
+			JLabel lblSettings = new JLabel("Settings");
+			lblSettings.setFont(new Font("Tahoma", Font.BOLD, 16));
+			
+			JPanel panel_ch_user = new JPanel();
+			
+			JPanel panel_ch_pass = new JPanel();
+			
+			JButton btnBack = new JButton("Back");
+			btnBack.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent arg0) {
+					limpiarCamposSettings();
+					userPanel.setVisible(true);
+					panelSettings.setVisible(false);
+					lblUser.setText(mainClient.getUserName());
+				}
+			});
+			GroupLayout gl_panelSettings = new GroupLayout(panelSettings);
+			gl_panelSettings.setHorizontalGroup(
+				gl_panelSettings.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panelSettings.createSequentialGroup()
+						.addGap(18)
+						.addGroup(gl_panelSettings.createParallelGroup(Alignment.LEADING)
+							.addGroup(gl_panelSettings.createSequentialGroup()
+								.addComponent(btnBack)
+								.addContainerGap())
+							.addGroup(gl_panelSettings.createSequentialGroup()
+								.addGroup(gl_panelSettings.createParallelGroup(Alignment.LEADING)
+									.addComponent(lblSettings)
+									.addComponent(panel_ch_user, GroupLayout.PREFERRED_SIZE, 667, GroupLayout.PREFERRED_SIZE)
+									.addComponent(panel_ch_pass, GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE))
+								.addContainerGap(19, GroupLayout.PREFERRED_SIZE))))
+			);
+			gl_panelSettings.setVerticalGroup(
+				gl_panelSettings.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panelSettings.createSequentialGroup()
+						.addContainerGap()
+						.addComponent(lblSettings)
+						.addGap(18)
+						.addComponent(panel_ch_user, GroupLayout.PREFERRED_SIZE, 142, GroupLayout.PREFERRED_SIZE)
+						.addPreferredGap(ComponentPlacement.UNRELATED)
+						.addComponent(panel_ch_pass, GroupLayout.PREFERRED_SIZE, 170, GroupLayout.PREFERRED_SIZE)
+						.addPreferredGap(ComponentPlacement.RELATED, 35, Short.MAX_VALUE)
+						.addComponent(btnBack)
+						.addContainerGap())
+			);
+			
+			JLabel lblChangePassword = new JLabel("Change password");
+			lblChangePassword.setFont(new Font("Tahoma", Font.BOLD, 14));
+			
+			passNewpassword = new JPasswordField();
+			passNewpassword.setColumns(10);
+			
+			JButton btnChange_password = new JButton("Change");
+			btnChange_password.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					changePassword();
+				}
+			});
+			btnChange_password.setBackground(new Color(100, 149, 237));
+			btnChange_password.setForeground(new Color(255, 255, 255));
+			
+			passRepeatpassword = new JPasswordField();
+			passRepeatpassword.setColumns(10);
+			
+			JLabel lblPassword = new JLabel("Password:");
+			
+			JLabel lblRepeatPassword = new JLabel("Repeat password:");
+			GroupLayout gl_panel_ch_pass = new GroupLayout(panel_ch_pass);
+			gl_panel_ch_pass.setHorizontalGroup(
+				gl_panel_ch_pass.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_pass.createSequentialGroup()
+						.addContainerGap(588, Short.MAX_VALUE)
+						.addComponent(btnChange_password)
+						.addContainerGap())
+					.addGroup(gl_panel_ch_pass.createSequentialGroup()
+						.addGap(32)
+						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.LEADING)
+							.addComponent(lblChangePassword)
+							.addGroup(gl_panel_ch_pass.createSequentialGroup()
+								.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.TRAILING)
+									.addComponent(lblPassword)
+									.addComponent(lblRepeatPassword))
+								.addGap(18)
+								.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.LEADING, false)
+									.addComponent(passRepeatpassword)
+									.addComponent(passNewpassword, GroupLayout.DEFAULT_SIZE, 340, Short.MAX_VALUE))))
+						.addContainerGap(188, Short.MAX_VALUE))
+			);
+			gl_panel_ch_pass.setVerticalGroup(
+				gl_panel_ch_pass.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_pass.createSequentialGroup()
+						.addContainerGap()
+						.addComponent(lblChangePassword)
+						.addGap(18)
+						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.BASELINE)
+							.addComponent(passNewpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblPassword))
+						.addPreferredGap(ComponentPlacement.UNRELATED)
+						.addGroup(gl_panel_ch_pass.createParallelGroup(Alignment.BASELINE)
+							.addComponent(passRepeatpassword, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblRepeatPassword))
+						.addPreferredGap(ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+						.addComponent(btnChange_password)
+						.addContainerGap())
+			);
+			panel_ch_pass.setLayout(gl_panel_ch_pass);
+			
+			JLabel lblChangeUserName = new JLabel("Change user name");
+			lblChangeUserName.setFont(new Font("Tahoma", Font.BOLD, 14));
+			
+			txtNewuser = new JTextField();
+			txtNewuser.setColumns(10);
+			
+			JButton btnChange_user = new JButton("Change");
+			btnChange_user.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent arg0) {
+					changeUser();
+				}
+			});
+			btnChange_user.setForeground(new Color(255, 255, 255));
+			btnChange_user.setBackground(new Color(100, 149, 237));
+			
+			JLabel lblName = new JLabel("Name:");
+			
+			lblOldname = new JLabel(mainClient.getUserName());
+			
+			JLabel lblNewName = new JLabel("New name:");
+			GroupLayout gl_panel_ch_user = new GroupLayout(panel_ch_user);
+			gl_panel_ch_user.setHorizontalGroup(
+				gl_panel_ch_user.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addContainerGap(588, Short.MAX_VALUE)
+						.addComponent(btnChange_user)
+						.addContainerGap())
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addGap(42)
+						.addComponent(lblChangeUserName)
+						.addContainerGap(496, Short.MAX_VALUE))
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addGap(67)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.TRAILING)
+							.addComponent(lblName)
+							.addComponent(lblNewName))
+						.addGap(18)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.LEADING)
+							.addComponent(txtNewuser, GroupLayout.PREFERRED_SIZE, 339, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblOldname))
+						.addContainerGap(189, Short.MAX_VALUE))
+			);
+			gl_panel_ch_user.setVerticalGroup(
+				gl_panel_ch_user.createParallelGroup(Alignment.LEADING)
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addContainerGap()
+						.addComponent(lblChangeUserName)
+						.addGap(18)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.BASELINE)
+							.addComponent(lblName)
+							.addComponent(lblOldname))
+						.addGap(14)
+						.addGroup(gl_panel_ch_user.createParallelGroup(Alignment.BASELINE)
+							.addComponent(txtNewuser, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addComponent(lblNewName))
+						.addContainerGap(48, Short.MAX_VALUE))
+					.addGroup(gl_panel_ch_user.createSequentialGroup()
+						.addContainerGap(108, Short.MAX_VALUE)
+						.addComponent(btnChange_user)
+						.addContainerGap())
+			);
+			panel_ch_user.setLayout(gl_panel_ch_user);
+			panelSettings.setLayout(gl_panelSettings);
 		}
 		catch(Exception e){
 			statLabel.setText("Server disconnected.");
@@ -683,6 +886,141 @@ public class LoginWindow {
 			btnRegister.setEnabled(false);
 		}
 	}
+	
+	// Comprueba la longitud del campo User name
+	protected void comprobarLongUser(String userName) throws Excepciones {
+		if (!comprobarLongitud(userName, 6, 8)) {
+			throw new Excepciones("User: min lenght: 6 and max lenght 8");
+		}
+	}
+	
+	// Comprueba la longitud de la contrasenya
+	protected void comprobarLongPass(String pass) throws Excepciones {
+		if (!comprobarLongitud(pass, 6, 8)) {
+			throw new Excepciones("Pass: min lenght: 6 and max lenght 8");
+		}
+	}
+
+	// Comprueba que la longitud este dentro de un rango
+	protected boolean comprobarLongitud(String texto, int min, int max) {
+		if ((texto.length() >= min) && (texto.length() <= max)) {
+			return true;
+		}
+		return false;
+	}
+	
+	protected void limpiarCamposLogin() {
+		 userField.setText("");
+		 passField.setText("");
+	}
+	
+	protected void limpiarCamposSingIn() {
+		userRegister.setText("");
+		passRegister1.setText("");
+		passRegister2.setText("");
+	}
+	
+	protected void limpiarCamposSettings() {
+		lblOldname.setText("");
+		txtNewuser.setText("");
+		passNewpassword.setText("");
+		passRepeatpassword.setText("");
+	}
+	
+	protected void changeUser() {
+		try {
+			String newName = txtNewuser.getText();
+			
+			// Campo vacio
+			if (newName.equals("")) {
+				throw new Excepciones("Empty user name");
+			}
+			
+			// Comprobar longitud del campo
+			comprobarLongUser(newName);
+			
+			if (comprobarPassword()) {
+				// Cambiar nombre de usuario
+				if (mainClient.cambiarUser(newName)) {
+					MensajeInfo("Name changed successfully!");
+					limpiarCamposSettings();
+					lblOldname.setText(newName);
+				}
+			}
+		} catch(Excepciones ex) {
+			MensajeError(ex.exErrorPersonalizado());
+			return;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return;
+		}
+	}
+
+	protected void changePassword() {
+		try {
+			String newPWD = new String(passNewpassword.getPassword());
+			String rePWD = new String(passRepeatpassword.getPassword());
+			
+			// Campos vacios
+			if (newPWD.equals("")) {
+				throw new Excepciones("Empty password");
+			} else if (rePWD.equals("")) {
+				throw new Excepciones("Empty repeat password");
+			}
+			
+			// Comprobar longitud del campo
+			comprobarLongPass(newPWD);
+			
+			// Campos iguales
+			if (newPWD.equals(rePWD)) {
+				if (comprobarPassword()) {
+					if (mainClient.cambiarPassword(newPWD)) {
+						MensajeInfo("Password changed successfully!");
+						limpiarCamposSettings();
+						lblOldname.setText(mainClient.getUserName());
+					}
+				}
+			} else {
+				throw new Excepciones("Passwords don't match");
+			}
+		} catch(Excepciones ex) {
+			MensajeError(ex.exErrorPersonalizado());
+			return;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return;
+		}
+	}
+	
+	protected boolean comprobarPassword() {
+		try {
+			JPasswordField pwd = new JPasswordField();
+			int action = JOptionPane.showConfirmDialog(panelSettings, pwd,
+					"Enter password:", JOptionPane.OK_CANCEL_OPTION);
+			
+			String paswd = new String(pwd.getPassword());
+			
+			// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
+			if(action == 0) {
+				if ( (!paswd.equals(null)) && (!paswd.equals("")) ) {
+					if (mainClient.comprobarUserPassword(paswd)) {
+						return true;
+					}
+				} else {
+					throw new Excepciones("Empty password");
+				}
+			}
+			return false;
+			
+		} catch(Excepciones ex) {
+			MensajeError(ex.exErrorPersonalizado());
+			return false;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return false;
+		}
+	}
+	
 
 	protected void recorrerListaTabla(byte accion) {
 		ArrayList<String> idFicheros = new ArrayList<String>();
@@ -732,7 +1070,7 @@ public class LoginWindow {
 						
 						// TODO comprobar que funcione de verdad
 						if (directoryChooser.getSelectedFile().canWrite()) {
-							System.out.println("escribir");
+							System.out.println("Puedo acceder y escribir en el directorio");
 							
 							for (int id=0; id<idFicheros.size(); id++) {
 								try {
@@ -742,7 +1080,7 @@ public class LoginWindow {
 								}
 							}
 						} else {
-							System.out.println("No puedo escribir");
+							System.out.println("No puedo acceder ni escribir en el directorio");
 						}
 					}
 					break;
@@ -752,7 +1090,8 @@ public class LoginWindow {
 					break;
 			}
 		} else {
-			JOptionPane.showMessageDialog(frmFilenimbus, "Nothing is selected!", "Table files", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(frmFilenimbus, "Nothing is selected!", 
+					"Table files", JOptionPane.WARNING_MESSAGE);
 		}
 	}
 
@@ -814,8 +1153,54 @@ public class LoginWindow {
 		return frmFilenimbus;
 	}
 	
-	// Para tener una alerta de errores general con el mismo formato
+	// Para tener alertas de informacion general con el mismo formato
+    private void MensajeInfo(String mensaje) {
+    	MensajeInfo("Info", mensaje);
+    }
+    private void MensajeInfo(String titulo, String mensaje) {
+    	JOptionPane.showMessageDialog(frmFilenimbus, mensaje, titulo, JOptionPane.INFORMATION_MESSAGE);
+	}
+    
+ // Para tener una alerta de errores general con el mismo formato
     private void MensajeError(String mensaje) {
     	JOptionPane.showMessageDialog(frmFilenimbus, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
 	}
+    
+    private void login() {
+    	try {
+    		String userName = userField.getText();
+			String pwd = new String(passField.getPassword());
+			
+			// Comprobar campos vacios
+			if (userName.equals("")) {
+				throw new Excepciones("Empty user");
+			} else if (pwd.equals("")) {
+				throw new Excepciones("Empty password");
+			}
+			
+			// Call connect method
+			if(mainClient.login(userName, pwd)){
+				statLabel.setText("Conectado.");
+				loginPanel.setVisible(false);
+				userPanel.setVisible(true);
+				//frmFilenimbus.setContentPane(userPanel);
+				
+				// Cargar los archivos del usuario en la tabla
+				cargarDatosTabla();
+				lblUser.setText(userName);
+				limpiarCamposLogin();
+			}
+		}
+		catch(Excepciones ex) {
+			MensajeError(ex.exErrorPersonalizado());
+			return;
+		}
+		catch(Exception ex) {
+			statLabel.setText(ex.getMessage());
+			return;
+		}
+		finally{
+			//statLabel.setText(tmp);
+		}
+    }
 }
