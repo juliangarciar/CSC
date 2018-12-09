@@ -539,14 +539,13 @@ public class Client{
     
     // Sends data with security checks
     private void secureSend(Object o) throws Exception{
-        if(isSecure){
+        if (isSecure) {
             Cipher ciph = Cipher.getInstance("AES");
 			ciph.init(Cipher.ENCRYPT_MODE, connectionKey);
-			SealedObject socketEncrypted = new SealedObject((Serializable) o, ciph);
+			SealedObject socketEncrypted = 
+				new SealedObject((Serializable) o, ciph);
 	    	out.writeObject(socketEncrypted);
-        }
-        // TODO Is this alright?
-        else{
+        } else {
             out.writeObject(o);
         }
     }
@@ -558,9 +557,7 @@ public class Client{
             Cipher ciph = Cipher.getInstance("AES");
             ciph.init(Cipher.DECRYPT_MODE, connectionKey);
             return socket.getObject(ciph);
-        }
-        // TODO Is this alright?
-        else{
+        } else {
             return in.readObject();
         }
     }
