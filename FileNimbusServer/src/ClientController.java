@@ -108,13 +108,18 @@ public class ClientController extends Thread{
 	public void connect() throws Exception{
 		 System.out.println(kClient + ": Conectando...");
 		 try {
+			 // Emite clave publica
 			 out.writeObject(keyPair.getPublic());
-
+			 
+			 // Recibe la clave secreta
 			 SealedObject i = (SealedObject) in.readObject();
+			 
+			 // Desencripta la clave secreta
 			 Cipher c = Cipher.getInstance("RSA");
 			 c.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
 			 connectionKey = (Key) i.getObject(c);
 			 
+			 // Encripta el socket
 			 c = Cipher.getInstance("AES");
 			 c.init(Cipher.ENCRYPT_MODE, connectionKey);
 			 SealedObject socketEncrypted = new SealedObject("010", c);
@@ -123,27 +128,14 @@ public class ClientController extends Thread{
 			 System.out.println(kClient + ": Conexion segura!");
 			 
 			 out.writeObject(socketEncrypted);
-			 // Care with this
 			 secureConnection = true;
 		 }
 		 catch(Exception e) {
-			 System.out.println(e);
+			 System.out.println(e.getMessage());
 		 }
 	}
 	
-	// TODO unificar esta comprobacion en todos los otros metodos
-	/*public boolean comprobarUserID() throws Exception {
-		if(userID!=Integer.MAX_VALUE) {
-			 secureSend("E101");
-			 return false;
-		 }
-		 return true;
-	}*/
-	
 	public void login() throws Exception {
-		/*if(!comprobarUserID()) {
-			 return;
-		 }*/
 		 if(userID!=Integer.MAX_VALUE) {
 			 secureSend("E101");
 			 return;
@@ -331,7 +323,7 @@ public class ClientController extends Thread{
 		 
 		 // Update table
 		 try {
-			 gestor.subirKey(usuid, file, k);
+			 gestor.shareFile(usuid, file, k, userID);
 		 }
 		 catch(SQLException e) {
 			 secureSend("E603"); // Already shared

@@ -47,11 +47,12 @@ public class LoginWindow {
 
 	final int portNum = 8080;
 	final String ip = "localhost";
-	final Client mainClient = new Client(portNum, ip);
+	final Client mainClient;
 	
 	// Acciones
 	final byte DOWNLOAD = 0;
 	final byte DELETE = 1;
+	final byte SHARE = 2;
 	
 	// Tamanyo ventana
 	final short WIDTH = 720;
@@ -64,6 +65,7 @@ public class LoginWindow {
 	 * Create the application.
 	 */
 	public LoginWindow() {
+		mainClient = new Client(portNum, ip);
 		initialize();
 	}
 
@@ -370,13 +372,7 @@ public class LoginWindow {
 		
 		btnShare.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO implementar
-				
-				String shareUser = JOptionPane.showInputDialog( userPanel,
-						"Enter the username to share:", "Share", JOptionPane.INFORMATION_MESSAGE);
-				
-				// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
-				//if(action == 0) {
+				recorrerListaTabla(SHARE);
 			}
 		});
 		
@@ -700,8 +696,7 @@ public class LoginWindow {
 		});
 		
 		// Checks the server connection
-		// TODO Bucle?
-		try{
+		try {
 			mainClient.initializeClient();
 			statLabel.setText("Server connected.");
 			
@@ -879,6 +874,11 @@ public class LoginWindow {
 			);
 			panel_ch_user.setLayout(gl_panel_ch_user);
 			panelSettings.setLayout(gl_panelSettings);
+		}
+		catch (Excepciones ex) {
+			statLabel.setText(ex.exErrorPersonalizado());
+			btnLogin.setEnabled(false);
+			btnRegister.setEnabled(false);
 		}
 		catch(Exception e){
 			statLabel.setText("Server disconnected.");
@@ -1081,6 +1081,38 @@ public class LoginWindow {
 							}
 						} else {
 							System.out.println("No puedo acceder ni escribir en el directorio");
+						}
+					}
+					break;
+					
+				case SHARE:
+					boolean shared = false;
+					JTextField shareUserTF = new JTextField();
+					int action = JOptionPane.showConfirmDialog(userPanel, shareUserTF,
+							"Enter the username to share:", JOptionPane.OK_CANCEL_OPTION);
+					
+					// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
+					if(action == 0) {
+						String shareUser = shareUserTF.getText();
+						if ( (!shareUser.equals(null)) && (!shareUser.equals("")) ) {
+							// Recorrer la lista y llamar uno a uno a share
+							try {
+								for (int id=0; id<idFicheros.size(); id++) {
+								
+									if (mainClient.share(shareUser, Integer.parseInt(idFicheros.get(id)))) {
+										shared = true;
+									}
+								}
+							} catch (Excepciones ex) {
+								MensajeError(ex.exErrorPersonalizado());
+							} catch (Exception e1) {
+								System.out.println(e1.getMessage());
+							}
+							if (shared) {
+								MensajeInfo("Shared!");
+							}
+						} else {
+							MensajeError("Empty username");
 						}
 					}
 					break;
