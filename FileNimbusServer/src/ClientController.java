@@ -111,7 +111,6 @@ public class ClientController extends Thread{
 			 out.writeObject(keyPair.getPublic());
 
 			 SealedObject i = (SealedObject) in.readObject();
-			 
 			 Cipher c = Cipher.getInstance("RSA");
 			 c.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
 			 connectionKey = (Key) i.getObject(c);
