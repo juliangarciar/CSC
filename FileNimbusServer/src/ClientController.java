@@ -140,19 +140,7 @@ public class ClientController extends Thread{
 		 }
 	}
 	
-	// TODO unificar esta comprobacion en todos los otros metodos
-	/*public boolean comprobarUserID() throws Exception {
-		if(userID!=Integer.MAX_VALUE) {
-			 secureSend("E101");
-			 return false;
-		 }
-		 return true;
-	}*/
-	
 	public void login() throws Exception {
-		/*if(!comprobarUserID()) {
-			 return;
-		 }*/
 		 if(userID!=Integer.MAX_VALUE) {
 			 secureSend("E101");
 			 return;

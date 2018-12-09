@@ -47,7 +47,7 @@ public class LoginWindow {
 
 	final int portNum = 8080;
 	final String ip = "localhost";
-	final Client mainClient = new Client(portNum, ip);
+	final Client mainClient;
 	
 	// Acciones
 	final byte DOWNLOAD = 0;
@@ -64,6 +64,7 @@ public class LoginWindow {
 	 * Create the application.
 	 */
 	public LoginWindow() {
+		mainClient = new Client(portNum, ip);
 		initialize();
 	}
 
@@ -700,8 +701,7 @@ public class LoginWindow {
 		});
 		
 		// Checks the server connection
-		// TODO Bucle?
-		try{
+		try {
 			mainClient.initializeClient();
 			statLabel.setText("Server connected.");
 			
@@ -879,6 +879,11 @@ public class LoginWindow {
 			);
 			panel_ch_user.setLayout(gl_panel_ch_user);
 			panelSettings.setLayout(gl_panelSettings);
+		}
+		catch (Excepciones ex) {
+			statLabel.setText(ex.exErrorPersonalizado());
+			btnLogin.setEnabled(false);
+			btnRegister.setEnabled(false);
 		}
 		catch(Exception e){
 			statLabel.setText("Server disconnected.");
