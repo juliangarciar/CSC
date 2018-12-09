@@ -6,7 +6,7 @@ import java.net.InetSocketAddress;
 public class Main {
 
     public static void main(String[] args) {
-        String host = "51.75.27.254";
+        String host = "localhost";
         int port = 8081;
 
         String cert = "../certs";
