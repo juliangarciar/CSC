@@ -236,6 +236,8 @@ public class Client{
     	if(id.length==shared.length && id.length==name.length) {
     		for(int num=0; num<id.length; num++) {
     			
+    			println(shared[num].toString());
+    			
     			// Creamos el objeto Archivo y lo agregamos a la lista
     			Archivo archivo = new Archivo(id[num].toString(), shared[num].toString(),
     					name[num].toString());
@@ -331,7 +333,7 @@ public class Client{
         		    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
         		    	key = c.doFinal(key);
         		    	
-        		    	//Desencriptamos el file
+        		    	//Desencriptamos el fichero
         		    	c = Cipher.getInstance("AES");
         		    	SecretKey sk = new SecretKeySpec(key, 0, key.length, "AES");
         		    	c.init(Cipher.DECRYPT_MODE, sk);
