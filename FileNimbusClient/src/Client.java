@@ -191,7 +191,7 @@ public class Client{
     	else{
             username = user;
             secureSend(username);
-            secureSend(obtenerHash(pass)); // mandar el hash de la password
+            secureSend(obtenerHash(pass)); // Mandar el HASH de PWD
             
             datos = secureReceive().toString();
             if(datos.equals("E111")) {
