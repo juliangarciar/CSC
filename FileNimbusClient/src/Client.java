@@ -400,6 +400,59 @@ public class Client{
          else{println("Unknown error");}
     }
     
+    public boolean share(String usu, int file) throws Exception {
+    	boolean resultado = false;
+    	if(username == null) {
+    		println("You are not logged in");
+    		return false;
+    	}
+    	secureSend(SHARE);
+    	
+    	String r =(String) secureReceive();
+    	if(r.equals("E600")) {
+    		println("Synchronization error");
+    		return false;
+    	}
+    	// Enviamos el ID del fichero y el nombre a quien se comparte
+    	secureSend(file);
+    	secureSend(usu);
+    	
+    	//Esperamos respuesta
+    	r = (String)secureReceive();
+    	if (r.equals("E601")) {
+    		throw new Excepciones("File not exist");
+    	} else if(r.equals("E602")){
+    		throw new Excepciones("User not exist");
+    	}
+    	
+    	if(r.equals("601")) {
+	    	//Leemos las claves
+	    	byte[] kf = (byte[]) secureReceive();//Clave secreta de fichero
+	    	byte[] ku = (byte[]) secureReceive();//Clave publica de usuario
+	    	
+	    	//Desencriptar la clave
+	    	Cipher c = Cipher.getInstance("RSA");
+	    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
+	    	byte[] k = c.doFinal(kf);
+	    	
+	    	//Encriptar la clave
+	    	PublicKey pku = KeyFactory.getInstance("RSA").generatePublic(
+	    			new X509EncodedKeySpec(ku));
+	    	c.init(Cipher.ENCRYPT_MODE, pku);
+	    	k = c.doFinal(k);
+	    	
+	    	//Enviamos la clave
+	    	secureSend(k);
+	    	r = (String) secureReceive();
+	    	if (r.equals("E603")) {
+	    		throw new Excepciones("This user already has that file");
+	    	} else if (r.equals("603")) { // File shared
+	    		resultado = true;
+	    	}
+    	}
+    	return resultado;
+    }
+    
     public boolean cambiarUser(String newName) throws Exception {
     	boolean userNameCambiado = false;
     	secureSend(CHANGE_USER);

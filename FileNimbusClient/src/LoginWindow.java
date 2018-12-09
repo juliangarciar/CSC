@@ -52,6 +52,7 @@ public class LoginWindow {
 	// Acciones
 	final byte DOWNLOAD = 0;
 	final byte DELETE = 1;
+	final byte SHARE = 2;
 	
 	// Tamanyo ventana
 	final short WIDTH = 720;
@@ -371,13 +372,7 @@ public class LoginWindow {
 		
 		btnShare.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO implementar
-				
-				String shareUser = JOptionPane.showInputDialog( userPanel,
-						"Enter the username to share:", "Share", JOptionPane.INFORMATION_MESSAGE);
-				
-				// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
-				//if(action == 0) {
+				recorrerListaTabla(SHARE);
 			}
 		});
 		
@@ -1086,6 +1081,34 @@ public class LoginWindow {
 							}
 						} else {
 							System.out.println("No puedo acceder ni escribir en el directorio");
+						}
+					}
+					break;
+					
+				case SHARE:
+					
+					JTextField shareUserTF = new JTextField();
+					int action = JOptionPane.showConfirmDialog(userPanel, shareUserTF,
+							"Enter the username to share:", JOptionPane.OK_CANCEL_OPTION);
+					
+					// 0 para Aceptar, 1 para No, 2 para Cancelar y -1 para el cierre de la ventana. 
+					if(action == 0) {
+						String shareUser = shareUserTF.getText();
+						if ( (!shareUser.equals(null)) && (!shareUser.equals("")) ) {
+							// Recorrer la lista y llamar uno a uno a share
+							for (int id=0; id<idFicheros.size(); id++) {
+								try {
+									if (mainClient.share(shareUser, Integer.parseInt(idFicheros.get(id)))) {
+										MensajeInfo("File shared!");
+									}
+								} catch (Excepciones ex) {
+									MensajeError(ex.exErrorPersonalizado());
+							} catch (Exception e1) {
+									System.out.println(e1.getMessage());
+								}
+							}
+						} else {
+							MensajeError("Empty username");
 						}
 					}
 					break;
