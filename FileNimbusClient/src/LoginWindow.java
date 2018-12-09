@@ -1086,7 +1086,7 @@ public class LoginWindow {
 					break;
 					
 				case SHARE:
-					
+					boolean shared = false;
 					JTextField shareUserTF = new JTextField();
 					int action = JOptionPane.showConfirmDialog(userPanel, shareUserTF,
 							"Enter the username to share:", JOptionPane.OK_CANCEL_OPTION);
@@ -1096,16 +1096,20 @@ public class LoginWindow {
 						String shareUser = shareUserTF.getText();
 						if ( (!shareUser.equals(null)) && (!shareUser.equals("")) ) {
 							// Recorrer la lista y llamar uno a uno a share
-							for (int id=0; id<idFicheros.size(); id++) {
-								try {
+							try {
+								for (int id=0; id<idFicheros.size(); id++) {
+								
 									if (mainClient.share(shareUser, Integer.parseInt(idFicheros.get(id)))) {
-										MensajeInfo("File shared!");
+										shared = true;
 									}
-								} catch (Excepciones ex) {
-									MensajeError(ex.exErrorPersonalizado());
-							} catch (Exception e1) {
-									System.out.println(e1.getMessage());
 								}
+							} catch (Excepciones ex) {
+								MensajeError(ex.exErrorPersonalizado());
+							} catch (Exception e1) {
+								System.out.println(e1.getMessage());
+							}
+							if (shared) {
+								MensajeInfo("Shared!");
 							}
 						} else {
 							MensajeError("Empty username");
