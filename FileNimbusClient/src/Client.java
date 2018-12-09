@@ -236,8 +236,6 @@ public class Client{
     	if(id.length==shared.length && id.length==name.length) {
     		for(int num=0; num<id.length; num++) {
     			
-    			println(shared[num].toString());
-    			
     			// Creamos el objeto Archivo y lo agregamos a la lista
     			Archivo archivo = new Archivo(id[num].toString(), shared[num].toString(),
     					name[num].toString());

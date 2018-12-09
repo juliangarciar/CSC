@@ -104,6 +104,13 @@ public class GestorBD {
 		preparedSentence.executeUpdate();
 	}
 	
+	public void shareFile(int usuid, int fileID, byte[] key, int userID) throws SQLException {
+		String sentence = "INSERT INTO fileuser(user, file, secretKey, shared) " + "VALUES("+usuid+", "+fileID+", ? , "+ userID +" )";
+		preparedSentence = sqlConnection.prepareStatement(sentence);
+		preparedSentence.setBytes(1, key);
+		preparedSentence.executeUpdate();
+	}
+	
 	public void close() throws SQLException {
 		System.out.println("Close conection BD...");
 		if(preparedSentence!=null)

@@ -322,7 +322,7 @@ public class ClientController extends Thread{
 		 
 		 // Update table
 		 try {
-			 gestor.subirKey(usuid, file, k);
+			 gestor.shareFile(usuid, file, k, userID);
 		 }
 		 catch(SQLException e) {
 			 secureSend("E603"); // Already shared
