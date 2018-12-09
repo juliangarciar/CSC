@@ -1,15 +1,11 @@
 public class Main {
 
-	public static void main(String[] args) throws Exception {
-		String sqlHost = "localhost";
-		String sqlPort = "3306";
-		String sqlDb = "filenimbusdb";
+	public static void main(String[] args) {
 		int port = 8080;
 		String ip = "localhost";
 		
-		Server server = new Server(port, ip, sqlHost, sqlPort, sqlDb);
-		
 		try{
+			Server server = new Server(port, ip);
 			server.initServer();
 		}
 		catch(Exception e) {

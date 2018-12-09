@@ -1,13 +1,24 @@
-import java.awt.BorderLayout;
-import java.awt.EventQueue;
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.net.ConnectException;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -16,325 +27,241 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
-public class Client {
-	private static final boolean print = true;//Valor que indica si se muestran o no por consola 
-	private static final int portNum = 8080;
-	private static final String ip = "localhost";
+public class Client{
+    private boolean printDebug = true; // Activate print debug
+	private int portNum;
+	private String ip;
 	
-	private static boolean sc;//Conexion segura
-	private static String pwd;
-	private static String username;
-	private static Key conectionKey = null; // Clave AES de conexion
-	private static KeyPair userKP;// Par de claves de usuario
+	private boolean isSecure = false;
+	private String pwd;
+	private String username;
+	private Key connectionKey = null; 
+	private KeyPair userKP = null;
 
+	private ObjectOutputStream out = null;
+	private ObjectInputStream in = null;
+    private Socket socket = null;
+    
+ // Codigos
+ 	final String CHECK_PWD ="099";
+ 	final String LOGIN ="100";
+ 	final String SIGNIT ="110";
+ 	final String LOGOUT ="120";
+ 	final String CHECK ="200";
+ 	final String UPLOAD ="300";
+	final String DOWNLOAD ="400";
+	final String DELETE ="500";
+	final String SHARE ="600";
+	final String CHANGE_PASS ="710";
+	final String CHANGE_USER ="720";
+	final String OTHER ="800";
+	final String CLOSE ="900";
 	
-	private static ObjectOutputStream out;
-	private static ObjectInputStream in;
-	private static Socket socket = null;
-	
-	
-    public static void main(String arg[]) throws Exception {
+ 	
+    // Client class constructor 
+    public Client(int portNum, String ip){
+        this.portNum = portNum;
+        this.ip = ip;
+    }
 
-    	try {
-        socket = new Socket(ip, portNum);
-        out = new ObjectOutputStream(socket.getOutputStream());
-        in = new ObjectInputStream(socket.getInputStream());
-    	}catch(ConnectException e) {
-    		println("Servidor desconectado, intentalo mas tarde");
-    		return;
-    	}
-        
-        
-        conection();
-        
-        boolean w = true;
-        printMenu();
-        while(w){
-        	try {
-		        switch( menu() ){
-		        	case 1:
-		        		login();
-		        		break;
-		        	case 11:
-		        		signin();
-		        		break;
-		        	case 12:
-		        		logout();
-		        		break;
-		        	case 2:
-		        		check();
-		        		break;
-		        	case 3:
-		        		upload();
-		        		break;
-		        	case 4:
-		        		download();
-		        		break;
-		        	case 5:
-		        		delete();
-		        		break;
-		        	case 6:
-		        		share();
-		        		break;
-		        	case 71:
-		        		changePass();
-		        		break;
-		        	case 72:
-		        		changeUser();
-		        		break;
-		        	case 8:
-		        		break;
-		        	case 9:
-		        		close();
-		        		w=false;
-		        		break;
-		        }
-        	}catch(Exception e) {
-        		println("Error: " + e.getMessage());
-        	}
+    // Init the client connection
+    public boolean initializeClient() throws Exception{
+        try{
+            socket = new Socket(ip, portNum);
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
         }
+        catch(ConnectException e){
+            println("Server disconnected, try it later.");
+            return false;
+        }
+
+        connectTo();
+
+        return isSecure;
     }
 
-    public static void conection() throws Exception {
-    	println("Generando conexión segura...");
-    	SS("000");
-    	Key K = (Key) SR();
-    	//println("Clave pública recibida...");
-    	
-    	//println("Generando clave secreta...");
+    // Connects to the server socket
+    public void connectTo() throws Exception {
+    	println("Generating secure connection ...");
+        secureSend("000");
+    	Key K = (Key) secureReceive();
     	KeyGenerator kgen = KeyGenerator.getInstance("AES");
-        kgen.init(128); //TODO Tamaño de clave secreta
-        conectionKey = kgen.generateKey();
+        kgen.init(128);
+        connectionKey = kgen.generateKey();
         
-        //println("Cifrando clave secreta...");
-    	Cipher c = Cipher.getInstance("RSA");
-    	c.init(Cipher.ENCRYPT_MODE, K); 
-    	SealedObject conectionKeyEncrypted  = new SealedObject(conectionKey, c);
-    	
-    	//println("Enviando clave secreta cifrada...");
-    	SS(conectionKeyEncrypted);
-    	
-    	//println("A la espera de confirmacion...");
-    	sc=true;
-    	if(SR().equals("010")) {
-    		println("Conexión AES Segura!");
-    	}else {
-    		println("Error de conexion, canal no seguro!");
-    		sc=false;
+    	Cipher ciph = Cipher.getInstance("RSA");
+    	ciph.init(Cipher.ENCRYPT_MODE, K); 
+    	SealedObject conectionKeyEncrypted = new SealedObject(connectionKey, ciph);
+
+        // TODO Omg esto era un error del infierno
+        secureSend(conectionKeyEncrypted);
+        isSecure = true;
+        Object codeRv = secureReceive();
+    	if(codeRv.equals("010")) {
+            println("Secure AES connection!");
+            isSecure = true;
+        }
+        else {
+    		isSecure = false;
     	}
     }
-    public static void login() throws Exception {
-    	SS("100");
-    	Object r = SR();
-    	if(r.getClass().equals(String.class) 
-    			&& r.equals("E100")) {
-    		println("Ya has hecho login");
-    		return;
-    	}else if(r.getClass().equals(String.class) 
-    			&& r.equals("101")) {
 
-        	//Obtenemos datos:
-    		println(" ~ Login ~");
-        	print(" Username: ");
-        	username = System.console().readLine();
-        	print(" Password: ");
-            pwd = new String(System.console().readPassword());
-            
-    		//Hashear la pass
-    		MessageDigest md = MessageDigest.getInstance("SHA-512");
-    		//Aqui se puede poner una sal para anadir seguridad, 
-    		byte[] pwdh = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
-
-    		
-    		SS(username);
-    		SS(pwdh);
-    		r=SR();
-    		if(r.getClass().equals(String.class)) {
-    			if(r.equals("E102")) {
-    				println("Usuario incorrecto");
-    				username=null;
-    				pwd=null;
-    			}else {
-    				r=SR();
-    				if(r.getClass().equals(String.class) 
-    						&& r.equals("E103")) {
-    					println("Contraseña incorrecta");
-    					username=null;
-        				pwd=null;
-    				}else {
-    					byte[]  pub = (byte[])SR();
-    					byte[]  priv = (byte[])SR();
-    					
-    					
-    					//Crear AES KEY desde pwd
-    			        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-    			        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
-    			        SecretKey tmp = factory.generateSecret(spec);
-    			        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-    			        
-    			        //Desencriptamos
-    			        Cipher c = Cipher.getInstance("AES");
-    					c.init(Cipher.DECRYPT_MODE, secret);
-    					priv = c.doFinal(priv);
-    					
-    					//Pasar de byte[] a Key
-    					KeyFactory kf = KeyFactory.getInstance("RSA"); 
-    					PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));
-    					PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
-    					
-    					userKP = new KeyPair(publicKey, privateKey); //Creamos el par de claves
-    					
-    					println("Bienvenido " + username);
-    				}	
-    			}
-    		}
-    	}
+    // Logs the client
+    public boolean login(String user, String pass) throws Exception {
+            	
+        if (comprobarUserPassword(user, pass, LOGIN)) {
+			byte[]  pub = (byte[])secureReceive();
+			byte[]  priv = (byte[])secureReceive();
+			
+			// Create AES key from pwd
+	        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+	        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
+	        SecretKey tmp = factory.generateSecret(spec);
+	        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+	        
+	        // Decrypt
+	        Cipher ciph = Cipher.getInstance("AES");
+			ciph.init(Cipher.DECRYPT_MODE, secret);
+			priv = ciph.doFinal(priv);
+			
+			// Cast from byte to key
+			KeyFactory kf = KeyFactory.getInstance("RSA"); 
+			PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(priv));
+			PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(pub));
+			
+			userKP = new KeyPair(publicKey, privateKey);
+			
+            println("Welcome " + username);
+            return true;
+		}	
+    			
+        return false;
     }
-    public static void logout() throws Exception {
+
+	// Logout the client
+    public void logout() throws Exception {
     	if(username == null) {
-    		println("No estas logueado");
-    	}else{
-    		SS("120");
-    		Object r = SR();
+    		println("You are not logged in");
+        }
+        else{
+    		secureSend(LOGOUT);
+    		Object r = secureReceive();
     		if(r.getClass().equals(String.class)) {
     			if(((String) r).equals("121")) {
-    				println("Logout realizado con éxito");
+    				println("Logout successfull!");
     				username = null;
     				pwd = null;
     				userKP = null;
-    			}else {
-    				println("No estabas logueado en el servidor");
+                }
+                else {
+    				println("You are not loggued into the server");
     				username = null;
     				pwd = null;
     				userKP = null;
     			}
     		}
-    	}
-    }
-    public static void signin() throws Exception {
-    	SS("110");
-    	Object r = SR();
-    	if(r.getClass().equals(String.class)
-    			&& r.equals("E100")) {
-    		println("Ya has hecho login");
-    		return;
-    	}
-    	
-    	//Obtenemos datos:
-		println(" ~ SIGN IN ~");
-    	print(" Username: ");
-    	username = System.console().readLine();
-    	print(" Password: ");
-        pwd = new String(System.console().readPassword());
-        
-        //Hashear la pass
-		MessageDigest md = MessageDigest.getInstance("SHA-512");
-		byte[] pwdh = md.digest(pwd.getBytes(StandardCharsets.UTF_8));
-		
-		SS(username);
-        SS(pwdh);
-        
-        r=SR();
-        if(r.getClass().equals(String.class) && r.equals("E111")) {
-        	println("Nombre de usuario ya registrado");
-        	return;
-        }
-    	
-        //Crear un par de claves
-    	KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048); //TODO Tamaño de par de claves
-        userKP = keyPairGenerator.genKeyPair();
-        
-        
-        //Crear AES KEY desde pwd
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        KeySpec spec = new PBEKeySpec(pwd.toCharArray(), pwd.getBytes(), 65536, 256);
-        SecretKey tmp = factory.generateSecret(spec);
-        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-        
-        //Encriptamos
-        Cipher c = Cipher.getInstance("AES");
-		c.init(Cipher.ENCRYPT_MODE, secret);
-		byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());		
-		
-		//Enviamos las claves
-        SS(userKP.getPublic().getEncoded());
-        SS(encrypted);
-        
-        if(SR().equals("113")) {
-        	println("Usuario creado: " + username);
         }
     }
-    public static void check() throws Exception {
+
+    public void close() throws Exception{
+    	secureSend(CLOSE);
+		if(secureReceive().equals("910")) {
+			socket.close();
+			in.close();
+			out.close();
+			println("Connection closed successfully");
+        }
+        else {
+			socket.close();
+			in.close();
+			out.close();
+			println("Closing error, closed also");
+		}
+    }
+
+    public boolean signUp(String user, String pass) throws Exception {
+        boolean signinResponse = false;
+        secureSend(SIGNIT);
+        
+        String datos = secureReceive().toString();
+    	if(datos.equals("E100")) {
+    		throw new Excepciones("You have already login");
+    	}
+    	else{
+            username = user;
+            secureSend(username);
+            secureSend(obtenerHash(pass)); // mandar el hash de la password
+            
+            datos = secureReceive().toString();
+            if(datos.equals("E111")) {
+                throw new Excepciones("User name already registered");
+            }
+            else {
+                // Crea las claves y se las manda al server
+                crearClavesPubPriv(pass, SIGNIT);
+                
+                if(secureReceive().equals("113")) {
+                    println("Created user: " + username);
+                    signinResponse = true;
+                }
+            }
+        }
+        return signinResponse;
+    }
+
+    
+    // Check user files in the server
+    public ArrayList<Archivo> check() throws Exception {
+    	
+    	// Creamos la lista que contendrï¿½ todos los archivos del usuario
+    	ArrayList<Archivo> lista = new ArrayList<Archivo>();
+    	
     	if(username==null) {
-    		println("No estas logueado");
-    		return;
+    		println("You are not loggued in");
+    		return lista;
     	}
     	
-    	SS("200");
-    	Object r = SR();
+    	secureSend(CHECK);
+    	Object r = secureReceive();
     	if(r.getClass().equals(String.class) && ((String)r).equals("E201")) {
-    		println("Error de sincronización");
-    		return;
+    		println("Synchronization error");
+    		return lista;
     	}
     	
     	//Leemos tres arrays de misma longitud
-    	Object[] id = (Object[]) SR();
-    	Object[] shared = (Object[]) SR();
-    	Object[] name = (Object[]) SR();
+    	Object[] id = (Object[]) secureReceive();
+    	Object[] shared = (Object[]) secureReceive();
+    	Object[] name = (Object[]) secureReceive();
     	
-    	
-    	//Esto es solo mostrar con formato por consola
-    	println("  | Id  | Compartido x | Nombre de Archivo |");
-    	println("  |_____|______________|___________________|");
     	if(id.length==shared.length && id.length==name.length) {
-    		for(int i=0; i<id.length; i++) {
-    			print("  | ");
-    			print(id[i]);
+    		for(int num=0; num<id.length; num++) {
     			
-    			int a = (int)(Math.log10((int)id[i]) +1);
-    			a=3-a; a = Math.max(a, 0); a= Math.min(a, 3);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("| ");
-    			
-    			print(shared[i]);
-    			
-    			a=((String)shared[i]).length();
-    			a=12-a; a = Math.max(a, 0); a= Math.min(a, 13);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("| ");
-    			
-    			print(name[i]);
-    			
-    			a=((String)name[i]).length();
-    			a=17-a; a = Math.max(a, 0); a= Math.min(a, 18);
-    			for(int j = 0 ; j<=a; j++) {print(" ");}
-    			print("|");
-    			
-    			println("");
+    			// Creamos el objeto Archivo y lo agregamos a la lista
+    			Archivo archivo = new Archivo(id[num].toString(), shared[num].toString(),
+    					name[num].toString());
+    			lista.add(archivo);
     		}
     	}
+    	return lista;
     }
-    public static void upload() throws Exception {
+
+    // TODO Checking this method
+    public void upload(File file) throws Exception {
     	if(username == null) {
-    		println("No estas logueado");
+    		println("You are not logged in");
     		return;
     	}
     	print("Fichero a subir: ");
-    	File file = new File(System.console().readLine());
     	if(!file.exists()) {
-    		println("Fichero no encontrado");
+    		println("File not found");
     		return;
     	}
         byte[] fileContent = Files.readAllBytes(file.toPath());
-         
         //Genera AES
         KeyGenerator kgen = KeyGenerator.getInstance("AES");
-        kgen.init(128); //TODO Tamaño de clave secreta
+        kgen.init(128); //TODO Tamanyo de clave secreta
         SecretKey k = kgen.generateKey();
          
         //Encripta File AES
@@ -348,390 +275,331 @@ public class Client {
         byte[] kcrypted = c.doFinal(k.getEncoded());
          
         
-        SS("300");
-        Object r = SR();
+        secureSend(UPLOAD);
+        Object r = secureReceive();
         if(r.getClass().equals(String.class)) {
         	if(((String)r).equals("E301")) {
-        		println("Error de sincronizacion");//Logueado en cliente y no en servidor
-        	}else {
-        		
-        		SS(file.toPath().getFileName().toString());//Enviar el nombre
-        		SS(fctypyed);//Enviar el file es demasiado grande y habra que fraccionarlo
-        		SS(kcrypted);//Enviar la clave    		
+        		println("Synchronization error");//Logueado en cliente y no en servidor
+			}
+			else {
+        		secureSend(file.toPath().getFileName().toString()); // Enviar el nombre
+        		secureSend(fctypyed); // Enviar el file es demasiado grande y habra que fraccionarlo
+        		secureSend(kcrypted); // Enviar la clave    		
       
-        		//A la espera de confirmacion
-        		r = SR();
+        		// A la espera de confirmacion
+        		r = secureReceive();
         		if(r.getClass().equals(String.class)) {
         			if(((String)r).equals("303")){
-        				println("Fichero subido con éxito");
-        			}else if(((String)r).equals("E302")){
-        				println("Error subiendo el fichero");
+        				println("File uploaded successfully");
+                    }
+                    else if(((String)r).equals("E302")){
+        				println("Error uploading the file");
         			}
-        		}else{println("Error desconocido");}
+                }
+                else{println("Unknown error");}
         	}
-        }else{println("Error desconocido");}       
-    }
-    public static void download() throws Exception {
-    	if(username==null) {
-    		println("No estas logueado");
-    		return;
-    	}    	
-    	SS("400");
-    	String r =(String) SR();
-    	if(r.equals("E401")) {
-    		println("Error de sincronizacion");
-    		return;
-    	}
-    	
-    	//Obtenemos el fichero
-    	int fileid=Integer.MAX_VALUE;
-    	print("Id del fichero a descargar:");
-    	do {
-    		try {
-    			fileid = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un número:");
-    		}
-    	}while(fileid==Integer.MAX_VALUE);
-    	
-    	//Mandamos el fichero
-    	SS(fileid);
-    	
-    	r = (String) SR();
-     	if(r.equals("E402")) {
-     		println("El fichero no existe");
-     		return;
-     	}
-     	
-    	//Obtenemos el fichero, la clave, y el nombre
-    	byte[] file = (byte[]) SR();
-    	byte[] key = (byte[]) SR();
-    	String filename = (String) SR();
-    	
-    	//Desencriptar la clave
-    	Cipher c = Cipher.getInstance("RSA");
-    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
-    	key = c.doFinal(key);
-    	
-    	//Desencriptamos el file
-    	c = Cipher.getInstance("AES");
-    	SecretKey sk = new SecretKeySpec(key, 0, key.length, "AES");
-    	c.init(Cipher.DECRYPT_MODE, sk);
-    	file = c.doFinal(file);
-    	
-    	
-    	//Obtenemos la direccion
-    	print("Direccion donde guardar: ");
-    	File path = new File(System.console().readLine());
-    	
-    	//Puede que no sea una dir valida
-    	if(!path.isDirectory()) {
-    		println("No es direccion!");
-    		return;
-    	}
-    	//Puede que la dir no exista
-    	if(!path.exists()) {
-    		println("La direccion no existe!");
-    	}
-    	
-    	try {
-    	File filepath = new File(path.getAbsolutePath() +"/"+ filename);
-	    	
-	    	//Metodo para usar nombres unicos
-	    	int i = 0;
-	    	
-	    	String name = filepath.getName().substring(0, filepath.getName().lastIndexOf("."));
-    		String ext = filepath.getName().substring(filepath.getName().lastIndexOf("."));
-    		
-	    	while (filepath.exists()) {
-	    		i++;
-	    		filename = name + " ("+i+")" + ext;
-	    		filepath = new File(path.getAbsolutePath() +"/"+ filename);
-	    		System.out.println(path.toString());
-	    	}
-	    	
-	    	
-	    	//Metodo para sobreescibir
-	    	/*
-	    	if(filepath.exists()) {
-	    		filepath.delete();
-	    	}
-	    	*/
-	    	try {
-		    	FileOutputStream stream = new FileOutputStream(filepath);
-			    stream.write(file);
-			    stream.close();
-		    	println("Fichero descargado con éxito!");
-	    	}catch(FileNotFoundException ef) {
-	    		println("No se encuentra el fichero, o acceso denegado");
-	    	}
-    	
-    	}catch(SecurityException e) {//Puede que nos denieguen el acceso
-    		println("No tienes permisos para acceder a esa carpeta");
-    	}
-    }
-    public static void delete() throws Exception {
-    	//TODO ------------------------- delete
-    	if(username==null) {
-    		println("No estas logeado");
-    		return;
-    	}
-    	
-    	SS("500");
-    	
-    	String r = (String) SR();
-    	if(r.equals("E501")) {
-    		println("Error de sincronizacion");
-    		return;
-    	}
-    	
-    	//Obtenemos el fichero
-    	int file=Integer.MAX_VALUE;
-    	print("Id del fichero a eliminar:");
-    	do {
-    		try {
-    			file = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un número:");
-    		}
-    	}while(file==Integer.MAX_VALUE);
-    	
-    	SS(file);
-    	
-    	r=(String) SR();
-    	
-    	if(r.equals("E502")) {
-    		println("No tienes ese fichero");
-    	}else if(r.equals("502")) {
-    		println("Fichero eliminado!");
-    	}else {
-    		println("Error desconocido");
-    	}
-    }
-    public static void share() throws Exception {
-    	if(username==null) {
-    		println("No estas logueado");
-    		return;
-    	}    	
-    	SS("600");
-    	String r =(String) SR();
-    	if(r.equals("E600")) {
-    		println("Error de sincronizacion");
-    		return;
-    	}
-    	
-    	//Obtenemos el fichero
-    	int file=Integer.MAX_VALUE;
-    	print("Id del fichero a compartir:");
-    	do {
-    		try {
-    			file = Integer.parseInt(System.console().readLine());
-    		}catch(NumberFormatException e) {
-    			print("Introduce un número:");
-    		}
-    	}while(file==Integer.MAX_VALUE);
-    	
-    	//Obtenemos el usuario
-    	String usu;
-    	print("Id del usuario a compartir:");
-    	usu = System.console().readLine();
-    	
-    	SS(file);
-    	SS(usu);
-    	
-    	//Esperamos respuesta
-    	r = (String)SR();
-    	if(r.equals("E601")) {
-    		println("Fichero inexistente");
-    		return;
-    	}else if(r.equals("E602")){
-    		println("Usuario inexistente");
-    		return;
-    	}
-    	
-    	//Leemos las claves
-    	byte[] kf = (byte[]) SR();//Clave secreta de fichero
-    	byte[] ku = (byte[]) SR();//Clave publica de usuario
-    	
-    	//Desencriptar la clave
-    	Cipher c = Cipher.getInstance("RSA");
-    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
-    	byte[] k = c.doFinal(kf);
-    	
-    	//Encriptar la clave
-    	PublicKey pku = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(ku));
-    	c.init(Cipher.ENCRYPT_MODE, pku);
-    	k = c.doFinal(k);
-    	
-    	//Enviamos la clave
-    	SS(k);
-    	r = (String) SR();
-    	if(r.equals("E603")) {
-    		println("Este usuario ya tiene ese fichero");
-    	}else if(r.equals("603")) {
-    		println("Fichero compartido!");
-    	}
-    	
-    }
-    public static void changePass() throws Exception {
-    	if(username==null) {
-    		println("No estas logueado");
-    		return;
-    	}
-    	
-    	SS("710");
-    	
-    	String r =(String) SR();
-    	
-    	if(r.equals("E711")) {
-    		println("Error de sincronización");
-    		return;
-    	}
-    	
-    	print("Password actual: ");
-        String actual = new String(System.console().readPassword());
-		MessageDigest md = MessageDigest.getInstance("SHA-512");
-		byte[] actualByte = md.digest(actual.getBytes(StandardCharsets.UTF_8));
-		
-		print("Password nueva: ");
-		String nueva = new String(System.console().readPassword());
-		byte[] nuevaByte = md.digest(nueva.getBytes(StandardCharsets.UTF_8));
-			
-		//Crear AES KEY desde nueva
-		SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		KeySpec spec = new PBEKeySpec(nueva.toCharArray(), nueva.getBytes(), 65536, 256);
-		SecretKey tmp = factory.generateSecret(spec);
-		SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-		
-        //Encriptamos
-		Cipher c = Cipher.getInstance("AES");
-		c.init(Cipher.ENCRYPT_MODE, secret);
-		byte[] priv = c.doFinal(userKP.getPrivate().getEncoded());	
-		
-		SS(actualByte);
-		SS(nuevaByte);
-		SS(priv);
-		
-		r =(String) SR();
-		if(r.equals("E712")) {
-			println("Contraseña incorrecta");
-		}else if(r.equals("E713")) {
-			println("Error desconocido");
-		}else{
-			pwd = nueva;
-			println("Contraseña cambiada con éxito!");
-		}	
-    }
-    public static void changeUser() throws Exception {
-    	if(username==null) {
-    		println("No estas logueado");
-    		return;
-    	}
-    	
-    	SS("720");
-    	String r = (String) SR();
-    	
-    	if(r.equals("E721")) {
-    		println("Error de sincronizacion");
-    		return;
-    	}
-    	
-    	print("Nuevo username: ");
-    	String uname = System.console().readLine();
-    	
-    	SS(uname);
-    	
-    	r = (String) SR();
-    	
-    	if(r.equals("E722")) {
-    		println("Nombre de usuario en uso");
-    	}else {
-    		println("Nombre cambiado con éxito");
-    		username = uname;
-    	}
-    }
-    public static void close() throws Exception{
-    	SS("900");
-		if(SR().equals("910")) {
-			socket.close();
-			in.close();
-			out.close();
-			println("Conexion cerrada con éxito");
-		}else {
-			socket.close();
-			in.close();
-			out.close();
-			println("Error de cierre, cerrando igualemente");
-		}
+        }
+        else{println("Unknown error");}       
     }
 
+    public void download(int idArchivo, String directorio) throws Exception {
+    	if(username == null) {
+    		println("You are not logged in");
+    		return;
+    	}
+    	
+    	secureSend(DOWNLOAD);
+    	Object r = secureReceive();
+        if(r.getClass().equals(String.class)) {
+        	if(((String)r).equals("E401")) {
+        		println("Synchronization error");//Logueado en cliente y no en servidor
+			}
+			else {
+				// Enviamos el id del archivo
+				secureSend(idArchivo);
+				
+        		// A la espera de confirmacion
+        		r = secureReceive();
+        		if(r.getClass().equals(String.class)) {
+        			if(((String)r).equals("402")){
+        				
+        				//Obtenemos el fichero, la clave, y el nombre
+        		    	byte[] file = (byte[]) secureReceive();
+        		    	byte[] key = (byte[]) secureReceive();
+        		    	String filename = (String) secureReceive();
+        				
+        		    	//Desencriptar la clave
+        		    	Cipher c = Cipher.getInstance("RSA");
+        		    	c.init(Cipher.DECRYPT_MODE, userKP.getPrivate());
+        		    	key = c.doFinal(key);
+        		    	
+        		    	//Desencriptamos el file
+        		    	c = Cipher.getInstance("AES");
+        		    	SecretKey sk = new SecretKeySpec(key, 0, key.length, "AES");
+        		    	c.init(Cipher.DECRYPT_MODE, sk);
+        		    	file = c.doFinal(file);
+        				
+    		        	File filepath = new File(directorio +"/"+ filename);
+	    	    		
+		    	    	// Metodo para renombrar el fichero si ya existe en "directorio"
+    		        	if(filepath.exists()) {
+
+    		        		int contFichIguales = 0;
+    		        		String name = filepath.getName().substring(0, filepath.getName().lastIndexOf("."));
+    		        		String ext = filepath.getName().substring(filepath.getName().lastIndexOf("."));
+    		        		
+    		        		while (filepath.exists()) {
+    		        			contFichIguales++;
+    		    	    		filename = name + " ("+contFichIguales+")" + ext;
+    		    	    		filepath = new File(directorio +"/"+ filename);
+    		    	    	}
+    		    	    }
+		    	    	
+    		        	// Meter los datos del fichero en "filepath"
+	    		    	FileOutputStream stream = new FileOutputStream(filepath);
+	    			    stream.write(file);
+	    			    stream.close();
+                    }
+                    else if(((String)r).equals("E402")){
+        				println("Error - file not exist in BD");
+        			}
+                }
+                else{println("Unknown error");}
+        	}
+        }
+        else {println("Unknown error");}
+    }
+
+    public void delete(int idArchivo) throws Exception {
+    	if(username == null) {
+    		println("You are not logged in");
+    		return;
+    	}
+    	secureSend(DELETE);
+    	
+    	 Object r = secureReceive();
+         if(r.getClass().equals(String.class)) {
+         	if(((String)r).equals("E501")) {
+         		println("Synchronization error");//Logueado en cliente y no en servidor
+         		return;
+ 			}
+ 			else {
+         		secureSend(idArchivo); // Enviar el idArchivo	
+       
+         		// A la espera de confirmacion
+         		r = secureReceive();
+         		if(r.getClass().equals(String.class)) {
+         			if(((String)r).equals("502")){
+         				println("File deleted successfully");
+                     }
+                     else if(((String)r).equals("E502")){
+         				println("Error - File not delete");
+         			}
+                 }
+                 else{println("Unknown error");}
+         	}
+         }
+         else{println("Unknown error");}
+    }
     
+    public boolean cambiarUser(String newName) throws Exception {
+    	boolean userNameCambiado = false;
+    	secureSend(CHANGE_USER);
+    	String datos = secureReceive().toString();
+    	
+    	if (datos.equals("721")) {
+    		secureSend(newName); 		// New name
+    		
+			datos = secureReceive().toString();
+			if (datos.equals("722")) {
+				username = newName;
+				userNameCambiado = true;
+			} else if (datos.equals("E722")) {
+				throw new Excepciones("Name already used");
+			} else {
+				throw new Excepciones("Error changing the username");
+			}
+		}
+    	return userNameCambiado;
+    }
     
+	public boolean cambiarPassword(String pass) throws Exception {
+		boolean passCambiada = false;
+		secureSend(CHANGE_PASS);
+		String datos = secureReceive().toString();
+		
+		if (datos.equals("711")) {
+			secureSend(obtenerHash(pwd)); // Mandamos la antigua
+			secureSend(obtenerHash(pass)); // mandar el hash de la nueva
+			crearClavesPubPriv(pass, CHANGE_PASS); // Crea nuevas claves y se las manda al server
+			
+			datos = secureReceive().toString();
+			if (datos.equals("E712")) {
+				throw new Excepciones("Incorrect old password");
+			} else if(datos.equals("E713")) {
+				throw new Excepciones("Unknown error");
+			} else {
+				pwd = pass;
+				passCambiada = true;
+			}
+		} else {
+			throw new Excepciones("Synchronization error");
+		}
+		return passCambiada;
+	}
+
+    // Se llama desde el panel de settings para comprobar si la contrasenya es correcta
+    public boolean comprobarUserPassword(String pass) throws Exception {
+    	return comprobarUserPassword(username, pass, CHECK_PWD);
+    }
     
+    // Comprueba que el usuario y la contrasenya coinciden con los datos de la BD
+    // Se utiliza en los paneles Login y Settings
+    public boolean comprobarUserPassword(String user, String pass, String codigo) throws Exception {
+    	
+    	String datos = "";
+    	secureSend(codigo); 					// Envia LOGIN o CHECK_PWD
+    	
+    	if (codigo.equals(LOGIN)) {
+    		datos = secureReceive().toString();
+        	if (datos.equals("E101")) {
+                println("You have already login");
+                return false;
+            } else if (datos.equals("101")) {
+            	username = user; 				// se asigna 1 vez
+            }
+    	}
+
+		secureSend(username);
+        secureSend(obtenerHash(pass)); // mandar el hash de la password
+        
+        datos = secureReceive().toString();
+		if(datos.equals("E102")) {
+				
+			//username = null;
+			// Pasamos la excepcion a la interfaz
+			throw new Excepciones("Incorrect user");
+			
+        } else if (datos.equals("102")) { // Usuario correcto
+        	
+        	datos = secureReceive().toString();
+			if (datos.equals("E103")) {
+				
+                //pwd = null;
+				// Pasamos la excepcion a la interfaz
+				if (codigo.equals(LOGIN)) {
+					throw new Excepciones("Incorrect password");
+				} else {
+					// Para Settings
+					throw new Excepciones("Incorrect old password");
+				}
+				
+			} else if (datos.equals("103")) { // Password correcto
+				pwd = pass;
+            	return true;
+            }
+        }
+    	return false;
+    }
     
+    // Hash
+    private byte[] obtenerHash(String pass) throws NoSuchAlgorithmException {
+		MessageDigest messageDig = MessageDigest.getInstance("SHA-512");
+		
+		//Aqui se puede poner una sal para anadir seguridad, 
+		return messageDig.digest(pass.getBytes(StandardCharsets.UTF_8));
+    }
     
+    // Claves publica y privada
+    private void crearClavesPubPriv(String pass, String codigo) throws Exception {
+    	//Crear un par de claves
+    	// Solo se crea cuando registramos un usuario
+    	if (codigo.equals(SIGNIT)) {
+	        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+	        keyPairGenerator.initialize(2048);
+	        userKP = keyPairGenerator.genKeyPair();
+    	}
+    	
+        //Crear AES KEY desde pass
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        KeySpec spec = new PBEKeySpec(pass.toCharArray(), pass.getBytes(), 65536, 256);
+        SecretKey tmp = factory.generateSecret(spec);
+        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+        
+        //Encriptamos
+        Cipher c = Cipher.getInstance("AES");
+        c.init(Cipher.ENCRYPT_MODE, secret);
+        byte[] encrypted = c.doFinal(userKP.getPrivate().getEncoded());		
+        
+        //Enviamos las claves
+        if (codigo.equals(SIGNIT)) { // Solo se envia esta cuando registramos un usuario
+        	secureSend(userKP.getPublic().getEncoded());
+        }
+        secureSend(encrypted);
+    }
     
-    public static void SS(Object o) throws Exception{
-    	if(sc) {
-	    	Cipher c = Cipher.getInstance("AES");
-			c.init(Cipher.ENCRYPT_MODE, conectionKey);
-			SealedObject socketEncrypted = new SealedObject((Serializable) o, c);
+    public String getUserName() {
+    	return username;
+    }
+    
+    // Sends data with security checks
+    private void secureSend(Object o) throws Exception{
+        if(isSecure){
+            Cipher ciph = Cipher.getInstance("AES");
+			ciph.init(Cipher.ENCRYPT_MODE, connectionKey);
+			SealedObject socketEncrypted = new SealedObject((Serializable) o, ciph);
 	    	out.writeObject(socketEncrypted);
-    	}else {
-    		out.writeObject(o);
-    	}
+        }
+        // TODO Is this alright?
+        else{
+            out.writeObject(o);
+        }
     }
-    public static Object SR() throws Exception {
-    	if(sc) {
-	    	SealedObject socket = (SealedObject) in.readObject();
-	    	Cipher c = Cipher.getInstance("AES");
-	    	c.init(Cipher.DECRYPT_MODE, conectionKey);
-	    	return socket.getObject(c);
-    	}else {
-    		return in.readObject();
-    	}
+    
+    // Receives data with security checks
+    private Object secureReceive() throws Exception{
+        if(isSecure){
+            SealedObject socket = (SealedObject)in.readObject();
+            Cipher ciph = Cipher.getInstance("AES");
+            ciph.init(Cipher.DECRYPT_MODE, connectionKey);
+            return socket.getObject(ciph);
+        }
+        // TODO Is this alright?
+        else{
+            return in.readObject();
+        }
     }
-    public static void print(Object o) {
-    	if(print) {
+
+    // Overload of print
+    private void print(Object o) {
+    	if(printDebug) {
     		System.out.print(o);
     	}
     }
-    public static void println(Object o) {
-    	if(print) {
+
+    // Overload of println
+    private void println(Object o) {
+    	if(printDebug) {
     		System.out.println(o);
     	}
     }
-    public static void printMenu() {
-    	println(" ");
-    	println("--------------------------------");
-    	println("---------- FileNimbus ----------");
-    	println("--------------------------------");
-    	println("  1  --- Login");
-    	println("  11 --- Signin");
-    	println("  12 --- Logout");
-    	println("  2  --- Muestra mis ficheros");
-    	println("  3  --- Subir");
-    	println("  4  --- Bajar");
-    	println("  5  --- Borrar");
-    	println("  6  --- Compartir");
-    	println("  71 --- Cambio de contraseña");
-    	println("  72 --- Cambio de usuario");
-    	println("  8  --- Peligro Virus, no pulsar");
-    	println("  9  --- Fin de conexión");
-    }
-    public static int menu() {
+
+    // TODO Is this alright?
+    public int menu() {
     	if(username == null) {
-    	print(" Unkown: ");
-    	}else {
-    	print(" " + username + ": ");
+    	    print(" Unkown: ");
+        }
+        else {
+    	    print(" " + username + ": ");
     	}
     	
     	String r = System.console().readLine();
     	
     	try {
     		return Integer.parseInt(r);
-    	}catch(NumberFormatException e) {
-    		println("Introduce un número");
+        }
+        catch(NumberFormatException e) {
+    		println("Enter a number");
     		return 0;
     	}
     }

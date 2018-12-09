@@ -2,92 +2,114 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.sql.Blob;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.sql.*;
+
 import javax.crypto.Cipher;
 import javax.crypto.SealedObject;
 
 public class ClientController extends Thread{
-	private boolean secureConnection = false; // Secure connection sentinel
-	private final Socket clientSocket;
-	private final ObjectInputStream in;
-	private final ObjectOutputStream out;
-	private final int kClient;
-	private Key connectionKey = null; // Secret connection key
-	private int userID = Integer.MAX_VALUE;
-	private KeyPair keyPair = null;
-	private Statement sqlSentence;
-	private Connection sqlConnection;
+	boolean secureConnection = false; // Secure connection sentinel
+	final Socket clientSocket;
+	final ObjectInputStream in;
+	final ObjectOutputStream out;
+	final int kClient;
+	Key connectionKey = null; // Secret connection key
+	int userID = Integer.MAX_VALUE;
+	KeyPair keyPair = null;
+	GestorBD gestor;
 	
-	public ClientController(Socket clientSocket, ObjectInputStream in, ObjectOutputStream out, int client, Statement sql, Connection con) {
-		 this.clientSocket = clientSocket;
-		 this.in = in;
-		 this.out = out;
-		 this.kClient = client;
-		 this.keyPair = buildKeyPair();
-		 this.sqlSentence = sql;
-		 this.sqlConnection = con;
+	// Codigos
+	final String CONECCT ="000";
+	final String CHECK_PWD ="099";
+	final String LOGIN ="100";
+	final String SIGNIT ="110";
+	final String LOGOUT ="120";
+	final String CHECK ="200";
+	final String UPLOAD ="300";
+	final String DOWNLOAD ="400";
+	final String DELETE ="500";
+	final String SHARE ="600";
+	final String CHANGE_PASS ="710";
+	final String CHANGE_USER ="720";
+	final String OTHER ="800";
+	final String CLOSE ="900";
+	
+	
+	public ClientController(Socket clientSocket, ObjectInputStream in, 
+			ObjectOutputStream out, int client) {
+		this.clientSocket = clientSocket;
+		this.in = in;
+		this.out = out;
+		this.kClient = client;
+		this.keyPair = buildKeyPair();
+		gestor = new GestorBD();
 	} 
 	 
 	public void run(){
 		 try {
-	        String i = (String)secureReceive();
-	        while(!i.isEmpty()) {
-	        	if(i.equals("000")) {
+	        String codigo = (String)secureReceive();
+	        while(!codigo.isEmpty()) {
+	        	if(codigo.equals(CONECCT)) {
 	        		connect();
-	        	}else if(i.equals("100")){
+	        	}else if(codigo.equals(CHECK_PWD)){
+	        		comprobarUserPassword(CHECK_PWD);
+	        	}else if(codigo.equals(LOGIN)){
 	        		login();
-	        	}else if(i.equals("110")) {
+	        	}else if(codigo.equals(SIGNIT)) {
 	        		signIn();
-	        	}else if(i.equals("120")) {
+	        	}else if(codigo.equals(LOGOUT)) {
 	        		logout();
-	        	}else if(i.equals("200")){
+	        	}else if(codigo.equals(CHECK)){
 	        		check();
-	        	}else if(i.equals("300")){
+	        	}else if(codigo.equals(UPLOAD)){
 	        		upload();
-	        	}else if(i.equals("400")){
+	        	}else if(codigo.equals(DOWNLOAD)){
 	        		download();
-	        	}else if(i.equals("500")){
+	        	}else if(codigo.equals(DELETE)){
 	        		delete();
-	        	}else if(i.equals("600")){
+	        	}else if(codigo.equals(SHARE)){
 	        		share();
-	        	}else if(i.equals("710")){
-	        		changePasecureSendword();
-	        	}else if(i.equals("720")){
+	        	}else if(codigo.equals(CHANGE_PASS)){
+	        		changePassword();
+	        	}else if(codigo.equals(CHANGE_USER)){
 	        		changeUser();
-	        	}else if(i.equals("800")){
+	        	}else if(codigo.equals(OTHER)){
 	        		// Void
 	        		secureSend("E000");
-	        	}else if(i.equals("900")) {
+	        	}else if(codigo.equals(CLOSE)) {
 	        		// Close
 	        		secureSend("910");
 	        		System.out.println(this.kClient + ": Fin de conexion");
 	        		return;
 	        	}
 	        	else{
-	            	System.out.println(this.kClient + ": " + i);
+	            	System.out.println(this.kClient + ": " + codigo);
 	            	secureSend("E100");
             	}
 	        	
-            	i = (String)secureReceive();
+	        	codigo = (String)secureReceive();
             }
             out.close();
             in.close();
             clientSocket.close();
 		}
 		catch(Exception e) {
-			 e.printStackTrace();
+			 System.out.println(e.getMessage());
 		}
 	}
 	   
 	public void connect() throws Exception{
 		 System.out.println(kClient + ": Conectando...");
 		 try {
-			 // TODO Clean method
 			 out.writeObject(keyPair.getPublic());
-			 
+
 			 SealedObject i = (SealedObject) in.readObject();
 			 
 			 Cipher c = Cipher.getInstance("RSA");
@@ -98,56 +120,90 @@ public class ClientController extends Thread{
 			 c.init(Cipher.ENCRYPT_MODE, connectionKey);
 			 SealedObject socketEncrypted = new SealedObject("010", c);
 			 
-			 System.out.println(kClient + ": Conexión segura!");
+			 // TODO Clean method
+			 System.out.println(kClient + ": Conexion segura!");
 			 
 			 out.writeObject(socketEncrypted);
-			 secureConnection=true;
+			 // Care with this
+			 secureConnection = true;
 		 }
 		 catch(Exception e) {
 			 System.out.println(e);
 		 }
-	 }
-	 public void login() throws Exception {
+	}
+	
+	// TODO unificar esta comprobacion en todos los otros metodos
+	/*public boolean comprobarUserID() throws Exception {
+		if(userID!=Integer.MAX_VALUE) {
+			 secureSend("E101");
+			 return false;
+		 }
+		 return true;
+	}*/
+	
+	public void login() throws Exception {
+		/*if(!comprobarUserID()) {
+			 return;
+		 }*/
 		 if(userID!=Integer.MAX_VALUE) {
 			 secureSend("E101");
 			 return;
 		 }
 		 secureSend("101");
-		 Object user = secureReceive();
-		 Object pasw = secureReceive();
-		 
-		 if(user.getClass().equals(String.class) && user.getClass().equals(String.class)) {
-			 // Check keys
-			 ResultSet rs = sqlSentence.executeQuery("SELECT * FROM user WHERE user='" + user + "'");
-			 if(rs.next()) {
-				 secureSend("102");
-				 byte[] pwd = rs.getBlob("pwd").getBytes(1, (int) rs.getBlob("pwd").length());
-				 if(Arrays.equals(pwd, (byte[])pasw)){
-					 secureSend("103");
-					// Send keys
-					 Blob privb = rs.getBlob("private");
-					 Blob pubb = rs.getBlob("public");
-					 
-					 byte[] priv = privb.getBytes(1, (int) privb.length());
-					 byte[] pub = pubb.getBytes(1, (int) pubb.length());
-					 
-					 secureSend(pub);
-					 secureSend(priv);
-					 
-					 userID = rs.getInt("id");
-					 
-					 System.out.println(kClient + ": Login: " + user);
-				 }
-				 else {
-					 secureSend("E103"); // Invalid pass
-					 System.out.println("Error clave");
-				 }
-			 }
-			 else {
-				 secureSend("E102"); // Invalid user
-			 }
-		 }
+		 comprobarUserPassword(LOGIN);
 	 }
+	
+	public void comprobarUserPassword(String accion) throws Exception {
+		Object user = secureReceive();
+		Object pasw = secureReceive();
+
+		if (user.getClass().equals(String.class)) {
+			// Check keys
+			gestor.conectarBD(); // conectamos con la BD
+			ResultSet rs = gestor.ejecutarQuery("SELECT * FROM user WHERE user='" + user + "'");
+			if (rs.next()) {
+				secureSend("102");
+				
+				byte[] pwd = rs.getBlob("pwd").getBytes(1, (int) rs.getBlob("pwd").length());
+				if (Arrays.equals(pwd, (byte[])pasw)) {
+					secureSend("103");
+					
+					if (accion.equals(LOGIN)) {
+						// Send keys
+						Blob privb = rs.getBlob("private");
+						Blob pubb = rs.getBlob("public");
+				
+						byte[] priv = privb.getBytes(1, (int) privb.length());
+						byte[] pub = pubb.getBytes(1, (int) pubb.length());
+				
+						secureSend(pub);
+						secureSend(priv);
+				
+						userID = rs.getInt("id");
+						System.out.println(kClient + ": Login: " + user);
+					}
+				}
+				else {
+					secureSend("E103"); // Invalid pass
+					rs.close();
+					gestor.close();
+					System.out.println("Error clave");
+					return;
+				}
+		
+				// Limpiar resultSet y cerrar conexion con BD
+				rs.close();
+				gestor.close();
+			}
+			else {
+				secureSend("E102"); // Invalid user
+				rs.close();
+				gestor.close();
+				return;
+			}
+		}
+	}
+	
 	 public void logout() throws Exception {
 		 if(userID == Integer.MAX_VALUE) {
 			 secureSend("E121");
@@ -158,18 +214,21 @@ public class ClientController extends Thread{
 		 }
 	 }
 	 public void signIn() throws Exception{
-		 if(userID!=Integer.MAX_VALUE) {
-			 secureSend("E100");
-			 return;
+		 if(userID != Integer.MAX_VALUE) {
+			secureSend("E100");
+			return;
 		 }
 		 secureSend("111");
 		 
-		 String newuser =(String) secureReceive();
+		 String newuser = secureReceive().toString();
 		 byte[] pwdh = (byte[]) secureReceive();
 		 
-		 ResultSet rs = sqlSentence.executeQuery ("SELECT user FROM user WHERE user = '"+newuser+"' LIMIT 1");
+		 gestor.conectarBD(); // conectamos con la BD
+		 ResultSet rs = gestor.ejecutarQuery("SELECT user FROM user WHERE user = '"+newuser+"' LIMIT 1");
 		 if(rs.first()) {
 			 secureSend("E111");//USUARIO YA REGISTRADO
+			 rs.close();
+			 gestor.close();
 			 return;
 		 }
 		 else {
@@ -179,23 +238,18 @@ public class ClientController extends Thread{
 		 byte[] pub = (byte[]) secureReceive();
 		 byte[] priv = (byte[]) secureReceive();
 		 
-		 PreparedStatement ps = sqlConnection.prepareStatement("INSERT INTO user(user, pwd, private, public) VALUES('"+ newuser +"', ?, ?, ?)",
-				 PreparedStatement.RETURN_GENERATED_KEYS);
-		 
-		 ps.setBytes(1, pwdh);
-		 ps.setBytes(2, priv);
-		 ps.setBytes(3, pub);
-		 ps.executeUpdate();
-		 rs = ps.getGeneratedKeys();
+		 rs = gestor.insertarUser(newuser, pwdh, priv, pub);
 	     if(rs.first())
 	     {
-	         userID = rs.getInt(1);
+	         //userID = rs.getInt(1);
 	         secureSend("113");
 	         System.out.println(kClient + ": Signin id:" +userID+ " username:" + newuser);
 	     }else {
 	    	 secureSend("E113");
 	     }
-		 ps.close();
+		 
+		 rs.close();
+		 gestor.close();
 		 
 	 }
 	 public void upload() throws Exception{
@@ -210,26 +264,19 @@ public class ClientController extends Thread{
 		 byte[] file = (byte[]) secureReceive(); // TODO Repeat send
 		 byte[] key = (byte[]) secureReceive();
 		 
-		 // Upload file
-		 String sentence = "INSERT INTO file(data, name) " + "VALUES(?, '" + filename + "')";
-		 PreparedStatement ps = sqlConnection.prepareStatement(sentence, PreparedStatement.RETURN_GENERATED_KEYS);
-		 
-		 ps.setBytes(1, file);
-		 ps.executeUpdate();
-		 
-		 // Upload key
-		 ResultSet rs = ps.getGeneratedKeys();    		 
+		 // Upload file and key
+		 gestor.conectarBD();
+		 ResultSet rs = gestor.subirArchivo(filename, file);    		 
 		 if(rs.first()){
 	         int fileID = rs.getInt(1);
-	         sentence = "INSERT INTO fileuser(user, file, secretKey, shared) " + "VALUES('"+userID+"', "+ fileID +", ?, '"+ userID + "')";
-			 ps = sqlConnection.prepareStatement(sentence);
-	 		 ps.setBytes(1, key);
-	 		 ps.executeUpdate();
+	         gestor.subirKey(userID, fileID, key);
 	 		 System.out.println(kClient + ": Fichero subido: " + filename);
 			 secureSend("303"); // OK
 	     }else{
 	    	 secureSend("E302"); // Error uploading file
 	     }
+		 rs.close();
+		 gestor.close();
 	 }
 	 public void share() throws Exception{
 		 if(userID==Integer.MAX_VALUE) {
@@ -247,10 +294,12 @@ public class ClientController extends Thread{
 		 byte[] kf;
 	
 		 // Search the file and save the key
-		 ResultSet rs = sqlSentence.executeQuery("SELECT secretKey "
+		 gestor.conectarBD(); // conectamos con la BD
+		 ResultSet rs = gestor.ejecutarQuery("SELECT secretKey "
 		 		+ "FROM fileuser "
 		 		+ "WHERE user='"+ userID +"' "
 		 		+ "AND file= " + file);
+		 
 		 if(!rs.first()) {
 			 secureSend("E601");
 			 return;
@@ -260,7 +309,7 @@ public class ClientController extends Thread{
 		 }
 		 
 		 // Search the user to share with and upload key
-		 rs = sqlSentence.executeQuery("SELECT id, public "
+		 rs = gestor.ejecutarQuery("SELECT id, public "
 			 		+ "FROM user "
 			 		+ "WHERE user='"+ usu +"'");
 		 if(!rs.first()) {
@@ -273,6 +322,8 @@ public class ClientController extends Thread{
 			ku = rs.getBlob("public").getBytes(1, (int) rs.getBlob("public").length());
 		 }
 		 
+		 rs.close();
+		 
 		 // Send keys
 		 secureSend(kf);
 		 secureSend(ku);
@@ -280,20 +331,19 @@ public class ClientController extends Thread{
 		 byte[] k = (byte[]) secureReceive();
 		 
 		 // Update table
-		 String sentence = "INSERT INTO fileuser(user, file, secretKey, shared) " + "VALUES("+usuid+", "+file+", ? , "+ userID +" )";
-		 PreparedStatement ps = sqlConnection.prepareStatement(sentence, PreparedStatement.RETURN_GENERATED_KEYS);
-		 
-		 ps.setBytes(1, k);
 		 try {
-			 ps.executeUpdate();
+			 gestor.subirKey(usuid, file, k);
 		 }
 		 catch(SQLException e) {
 			 secureSend("E603"); // Already shared
 			 System.out.println(e);
+			 gestor.close();
 			 return;
 		 }
+		 gestor.close();
 		 secureSend("603");
 	 }
+	 
 	 public void download() throws Exception{
 		 if(userID == Integer.MAX_VALUE) {
 			 secureSend("E401");
@@ -303,7 +353,8 @@ public class ClientController extends Thread{
 		 
 		 int fileID = (int) secureReceive();
 		 
-		 ResultSet rs = sqlSentence.executeQuery("SELECT * "
+		 gestor.conectarBD(); // conectamos con la BD
+		 ResultSet rs = gestor.ejecutarQuery("SELECT * "
 		 		+ "FROM fileuser, file "
 		 		+ "WHERE fileuser.user = '"+ userID +"' "
 		 		+ "AND file.id = fileuser.file "
@@ -319,9 +370,12 @@ public class ClientController extends Thread{
 			 secureSend(rs.getString("name"));
 			 
 			 String name =rs.getString("name");
-			 System.out.println(kClient + ": DesecureConnectionargado fichero: " + name + " id: " + fileID);
+			 System.out.println(kClient + ": Descargado fichero: " + name + " id: " + fileID);
 		 }
+		 rs.close();
+		 gestor.close();
 	 }
+	 
 	 public void check() throws Exception{
 		 if(userID==Integer.MAX_VALUE) {
 			 secureSend("E201");
@@ -330,7 +384,8 @@ public class ClientController extends Thread{
 		 }
 		 
 		 // Search in the DDBB
-		 ResultSet rs = sqlSentence.executeQuery("SELECT f.name filename, f.id fileid, u.user shared "
+		 gestor.conectarBD(); // conectamos con la BD
+		 ResultSet rs = gestor.ejecutarQuery("SELECT f.name filename, f.id fileid, u.user shared "
 		 		+ "FROM fileuser r, file f, user u "
 		 		+ "WHERE r.shared = u.id "
 		 		+ "AND r.file = f.id "
@@ -345,11 +400,14 @@ public class ClientController extends Thread{
 			 shared.add(rs.getString("shared"));
 			 name.add(rs.getString("filename"));
 		 }
+		 rs.close();
+		 gestor.close();
 		 
 		 secureSend(id.toArray());
 		 secureSend(shared.toArray());
 		 secureSend(name.toArray());
 	 }
+	 
 	 public void delete() throws Exception{
 		 if(userID==Integer.MAX_VALUE) {
 			 secureSend("E501");
@@ -359,19 +417,21 @@ public class ClientController extends Thread{
 			 secureSend("501");
 		 }
 		 
-		 int r= (Integer) secureReceive();
-		 
-		 String query = "DELETE FROM fileuser WHERE user=" + userID + " AND file=" + r;
+		 int idArchivo = (Integer) secureReceive();
 		 try {
-			 sqlSentence.executeQuery(query);
+			 gestor.conectarBD(); // conectamos con la BD
+			 gestor.borrarArchivo(userID, idArchivo);
+			 gestor.close();
 		 }
 		 catch(SQLException e){
 			 secureSend("E502");
+			 gestor.close();
 			 return;
 		 }
 		 secureSend("502");
 	 }
-	 public void changePasecureSendword() throws Exception{
+	 
+	 public void changePassword() throws Exception{
 		 if(userID==Integer.MAX_VALUE) {
 			 secureSend("E711");
 		 }
@@ -383,70 +443,78 @@ public class ClientController extends Thread{
 		 byte[] nueva = (byte[]) secureReceive();
 		 byte[] priv = (byte[]) secureReceive();
 		 
-		 PreparedStatement ps = sqlConnection.prepareStatement("UPDATE user SET "
-		 		+ "pwd = ?, "
-		 		+ "private = ? "
-		 		+ "WHERE id = "+userID
-		 		+ " AND pwd = ?");
-		 ps.setBytes(1, nueva);
-		 ps.setBytes(2, priv);
-		 ps.setBytes(3, actual);
-		 int i = ps.executeUpdate();
+		 gestor.conectarBD(); // conectamos con la BD
+		 int numCambios = gestor.cambiarPassword(userID, nueva, priv, actual);
+		 gestor.close();
 		 
-		 if(i < 1) {
+		 if(numCambios < 1) {
 			 secureSend("E712");
-		 }else if(i>1) {
+		 }else if(numCambios > 1) {
 			 secureSend("E713");
 		 }else {
 			 secureSend("712");
 		 } 
 	 }
-	 public void changeUser() throws Exception{
+	 
+	 public void changeUser() throws Exception {
 		 if(userID==Integer.MAX_VALUE) {
 			 secureSend("E721");
 		 }else {
 			 secureSend("721");
 		 }
+		 String newName = secureReceive().toString();
 		 
-		 String name = (String) secureReceive();
+		 gestor.conectarBD(); // conectamos con la BD
+		 ResultSet rs = gestor.ejecutarQuery("SELECT id FROM user WHERE user.user='"+newName+"'");
 		 
-		 ResultSet rs = sqlSentence.executeQuery("SELECT id FROM user WHERE user.user='"+name+"'");
-		 if(rs.first()) {
+		 // Existe ya ese nombre
+		 if (rs.next()) {
 			 secureSend("E722");
+			 rs.close();
+			 gestor.close();
 			 return;
-		 }
-		 String query = "UPDATE user SET user='"+name+"' WHERE id = "+userID;
-		 System.out.println(query);
-		 int r = sqlSentence.executeUpdate("UPDATE user SET user.user='"+name+"' WHERE id = "+userID);
-		 if(r==1) {
-			 secureSend("722");
-		 }
-		 else {
-			 secureSend("723");
+			 
+		// No existe ese nombre
+		 } else {
+			 int numCambios = gestor.cambiarUser(userID, newName);
+			 if (numCambios==1) {
+				 secureSend("722"); // Cambio bien hecho
+				 rs.close();
+				 gestor.close();
+			 }
+			 else {
+				 secureSend("723");
+				 rs.close();
+				 gestor.close();
+				 return;
+			 }
 		 }
 	 }
 	 
 	public void secureSend(Object o) throws Exception{
-		 if(secureConnection) {
-			 Cipher c = Cipher.getInstance("AES");
-			 c.init(Cipher.ENCRYPT_MODE, connectionKey);
-			 SealedObject socketEncrypted = new SealedObject((Serializable) o, c);
-			 out.writeObject(socketEncrypted);
-		 }
-		 else {
-			 out.writeObject(o);
-		 }
+		if(secureConnection) {
+			Cipher c = Cipher.getInstance("AES");
+			c.init(Cipher.ENCRYPT_MODE, connectionKey);
+			SealedObject socketEncrypted = new SealedObject((Serializable) o, c);
+			out.writeObject(socketEncrypted);
+		}
+		else {
+			out.writeObject(o);
+		}
     }
 	
 	public Object secureReceive() throws Exception {
-		 if(secureConnection) {
-			 SealedObject socket = (SealedObject) in.readObject();
-			 Cipher c = Cipher.getInstance("AES");
-			 c.init(Cipher.DECRYPT_MODE, connectionKey);
-			 return socket.getObject(c);
-		 }else {
-			 return in.readObject();
-		 }
+		if(secureConnection) {
+			Object o = in.readObject();
+			System.out.println(o);
+			SealedObject socket = (SealedObject) o;
+			Cipher c = Cipher.getInstance("AES");
+			c.init(Cipher.DECRYPT_MODE, connectionKey);
+			return socket.getObject(c);
+		}
+		else {
+			return in.readObject();
+		}
 	}
 	
 	public KeyPair buildKeyPair(){
